@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "587497948701",
+    "project_id": "react-native-projects-bbad2",
+    "storage_bucket": "react-native-projects-bbad2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:587497948701:android:203d14acbbf88bb8aca8f4",
+        "android_client_info": {
+          "package_name": "com.videocall"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "587497948701-mnimsgtbrijofofrgcv5g49gq931qtnh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnhhOrghmnFYXwC9e9BDCiMrHl9BsoBPg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "587497948701-mnimsgtbrijofofrgcv5g49gq931qtnh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:587497948701:android:9f33d1e630d0134baca8f4",
+        "android_client_info": {
+          "package_name": "com.videocallrn"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "587497948701-mnimsgtbrijofofrgcv5g49gq931qtnh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnhhOrghmnFYXwC9e9BDCiMrHl9BsoBPg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "587497948701-mnimsgtbrijofofrgcv5g49gq931qtnh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
