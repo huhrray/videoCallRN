@@ -1,16 +1,19 @@
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ViewStyle } from "react-native";
 import React from "react";
 import { MediaStream, RTCView } from "react-native-webrtc";
 import Button from "./Button";
+import ChatContainer from "./ChatContainer";
 interface Props {
     hangup: () => void;
     localStream?: MediaStream | null;
     remoteStream?: MediaStream | null;
+    style?: boolean;
+    message?: any[]
 }
 function ButtonContainer(props: Props) {
     return (
-        <View style={styles.bContainer}>
-            <Button iconName="phone" backgroundColor="red" onPress={props.hangup} />
+        <View style={props.style ? styles.callEndBtnContainer : styles.bContainer}>
+            <Button iconName="phone-slash" backgroundColor="red" onPress={props.hangup} />
         </View>
     );
 }
@@ -32,6 +35,7 @@ export default function Video(props: Props) {
     if (props.localStream && props.remoteStream) {
         return (
             <View style={styles.container}>
+                <ButtonContainer hangup={props.hangup} style={true} />
                 <RTCView
                     streamURL={props.remoteStream.toURL()}
                     objectFit={"cover"}
@@ -42,7 +46,10 @@ export default function Video(props: Props) {
                     objectFit={"cover"}
                     style={styles.videoLocal}
                 />
-                <ButtonContainer hangup={props.hangup} />
+                <View style={styles.cContainer}>
+                    {ChatContainer(props.message)}
+                </View>
+
             </View>
         );
     }
@@ -67,8 +74,17 @@ const styles = StyleSheet.create({
         position: "absolute",
         width: 100,
         height: 150,
-        top: 0,
-        left: 20,
-        elevation: 10,
+        top: 10,
+        right: 20,
+        elevation: 10
+    },
+    cContainer: {
+        position: "absolute",
+        bottom: 30,
+        width: "100%",
+        paddingHorizontal: 10,
+    },
+    callEndBtnContainer: {
+
     }
 });

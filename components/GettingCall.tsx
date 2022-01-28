@@ -20,7 +20,7 @@ export default function GettingCall(props: Props) {
                 />
 
                 <Button
-                    iconName="phone"
+                    iconName="phone-slash"
                     backgroundColor="red"
                     onPress={props.hangup}
                     style={{ marginRight: 30 }}
