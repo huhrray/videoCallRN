@@ -25,7 +25,6 @@ export default function ChatContainer(message: any[] | undefined) {
         // return () => {
         //     subscribe();
         // }
-
     }, [])
 
     async function getUser() {
@@ -88,7 +87,7 @@ export default function ChatContainer(message: any[] | undefined) {
                         },
                     }}
                 />
-                <Text style={styles.messageUsername}>{userId}</Text>
+                <Text style={styles.messageUsername}>{props.currentMessage.user.name}</Text>
             </View>
         );
     };

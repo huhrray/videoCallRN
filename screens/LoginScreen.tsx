@@ -1,23 +1,38 @@
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import { Button, TextInput } from 'react-native-paper';
+import { Button, Snackbar, TextInput } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-
+import firestore from '@react-native-firebase/firestore';
+import auth from "@react-native-firebase/auth"
 
 export default function LoginScreen(props: { navigation: string[]; }) {
     const [userId, setUserId] = useState("")
+    const [userPw, setUserPw] = useState("")
     const [loading, setLoading] = useState(false);
-
-
+    const [visible, setVisible] = useState(false);
     const onLogin = async () => {
         setLoading(true);
         try {
-            await AsyncStorage.setItem('userId', userId);
-            setLoading(false);
-            props.navigation.push('Call');
-            // props.navigation.push('Chat');
+            //login auth
+            const credential = await auth().signInWithEmailAndPassword(userId, userPw)
+            if (credential) {
+                console.log(credential.user)
+                setVisible(true)
+                setUserId("")
+                setUserPw("")
+                //add current logged in users in firestore to see who is in
+                firestore().collection('currentUsers').add({
+                    userId: userId, password: userPw
+                })
+                //AUTH CHECK LOGIC SHOULD BE ADDED!****************************
+                await AsyncStorage.setItem('userId', userId);
+                setLoading(false);
+                props.navigation.push('Home');
+                // props.navigation.push('Call');
+                // props.navigation.push('Chat');
+            }
         } catch (err) {
             console.log('Error', err);
             setLoading(false);
@@ -31,12 +46,21 @@ export default function LoginScreen(props: { navigation: string[]; }) {
                 <Text style={styles.heading}>Vchina</Text>
 
                 <TextInput
-                    label="아이디"
+                    label="이메일"
                     onChangeText={text => setUserId(text)}
                     mode="outlined"
                     activeOutlineColor="#2247f1"
                     style={styles.input}
                     autoFocus
+                />
+                <TextInput
+                    label="비밀번호"
+                    onChangeText={text => setUserPw(text)}
+                    mode="outlined"
+                    activeOutlineColor="#2247f1"
+                    style={styles.input}
+                    secureTextEntry
+                    right={<TextInput.Icon name="eye" />}
                 />
                 <Button
                     mode="contained"
@@ -57,6 +81,11 @@ export default function LoginScreen(props: { navigation: string[]; }) {
                 >
                     회원가입
                 </Button>
+                <Snackbar
+                    visible={visible}
+                    onDismiss={() => setVisible(false)}>
+                    로그인되었습니다.
+                </Snackbar>
             </View>
         </View>
     );

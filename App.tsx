@@ -239,7 +239,7 @@
 //   },
 // });
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import LoginScreen from './screens/LoginScreen';
 import CallScreen from './screens/CallScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -248,42 +248,78 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import { StyleSheet } from 'react-native';
 import ChatScreen from './screens/ChatScreen';
 import RegisterScreen from './screens/RegistScreen';
+import HomeScreen from './screens/HomeScreen';
+import auth from '@react-native-firebase/auth';
+import UserListScreen from './screens/UserListScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-  return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: '#2247f1',
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-            fontSize: 25,
-          },
-          headerTitleAlign: "center",
-        }}>
+  // Set an initializing state whilst Firebase connects
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState();
+  // Handle user state changes
+  function onAuthStateChanged(user: any) {
+    setUser(user);
+    if (initializing) setInitializing(false);
+    console.log('user:::::', user);
+  }
 
-        <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{ headerShown: false }}
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, []);
+  if (initializing) return null;
 
-        />
-        <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name='Chat' component={ChatScreen} />
-        <Stack.Screen name="Call" component={CallScreen} />
-        {/* <Stack.Screen name="Chat" component={ChatScreen} /> */}
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
+  if (!user) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: '#2247f1',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+              fontSize: 25,
+            },
+            headerTitleAlign: 'center',
+          }}>
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  } else {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: '#2247f1',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+              fontSize: 25,
+            },
+            headerTitleAlign: 'center',
+          }}>
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="List" component={UserListScreen} />
+          <Stack.Screen name="Chat" component={ChatScreen} />
+          <Stack.Screen name="Call" component={CallScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
-  icon: {
-
-  }
-})
+  icon: {},
+});
