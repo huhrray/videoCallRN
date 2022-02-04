@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Button, TextInput } from 'react-native-paper';
 import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
 export default function RegisterScreen(props: { navigation: string[] }) {
     const [name, setName] = useState('');
@@ -10,10 +11,13 @@ export default function RegisterScreen(props: { navigation: string[] }) {
 
     const handleJoin = async (email: string, password: string) => {
         try {
-            let response = await auth()
+            let cred = await auth()
                 .createUserWithEmailAndPassword(email, password)
-            if (response) {
-                console.log('????', response);
+            if (cred) {
+                firestore().collection('users').doc(cred.user.uid).set({
+                    name: name
+                })
+                console.log('????', cred);
                 setName('');
                 setEmail('');
                 setPassword('');

@@ -8,6 +8,7 @@ import firestore from '@react-native-firebase/firestore';
 import auth from "@react-native-firebase/auth"
 
 export default function LoginScreen(props: { navigation: string[]; }) {
+    const [userName, setUserName] = useState("")
     const [userId, setUserId] = useState("")
     const [userPw, setUserPw] = useState("")
     const [loading, setLoading] = useState(false);
@@ -22,10 +23,7 @@ export default function LoginScreen(props: { navigation: string[]; }) {
                 setVisible(true)
                 setUserId("")
                 setUserPw("")
-                //add current logged in users in firestore to see who is in
-                firestore().collection('currentUsers').add({
-                    userId: userId, password: userPw
-                })
+
                 //AUTH CHECK LOGIC SHOULD BE ADDED!****************************
                 await AsyncStorage.setItem('userId', userId);
                 setLoading(false);

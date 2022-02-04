@@ -244,7 +244,6 @@ import LoginScreen from './screens/LoginScreen';
 import CallScreen from './screens/CallScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
 import { StyleSheet } from 'react-native';
 import ChatScreen from './screens/ChatScreen';
 import RegisterScreen from './screens/RegistScreen';
@@ -258,11 +257,10 @@ export default function App() {
   // Set an initializing state whilst Firebase connects
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState();
-  // Handle user state changes
+  // Handle user state 
   function onAuthStateChanged(user: any) {
     setUser(user);
     if (initializing) setInitializing(false);
-    console.log('user:::::', user);
   }
 
   useEffect(() => {

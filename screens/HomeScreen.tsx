@@ -1,19 +1,37 @@
-import { StyleProp, StyleSheet, Text, View, ViewProps, ViewStyle } from 'react-native';
-import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import auth from '@react-native-firebase/auth'
-import { Avatar, Button, Card, Divider, List, Paragraph, Snackbar, Subheading, Surface, Title } from 'react-native-paper';
-import { $DeepPartial } from '@callstack/react-theme-provider';
-import { IconSource } from 'react-native-paper/lib/typescript/components/Icon';
+import { Card, Divider, Paragraph } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LogoutButton from '../components/LogoutButton';
+import firestore from '@react-native-firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = (props: { navigation: string[]; }) => {
+    const [name, setName] = useState("")
     const user = auth().currentUser
+
     if (user === null) {
         props.navigation.push("Login")
     }
+    useEffect(() => {
+        //get username with the user uid from auth 
+        firestore().collection("users").doc(user?.uid).get().then(doc => {
+            setName(doc.data()?.name)
+        })
+    }, [user])
+
+    useEffect(() => {
+        if (name !== "") {
+            //add current logged in users in firestore to see who is in
+            firestore().collection('currentUsers').doc(user?.uid).set({
+                userName: name
+            })
+        }
+    }, [name])
+
     return (
-        <View style={styles.root}>
+        <ScrollView style={styles.root}>
             <View style={styles.aContainer}>
                 <Card style={styles.patientCardContainer}>
                     <Card.Content style={styles.patientCard}>
@@ -21,7 +39,7 @@ const HomeScreen = (props: { navigation: string[]; }) => {
                         <Icon name="circle-slice-1" color="red" size={100} />
                         <View style={styles.patientCardText}>
                             <Paragraph style={styles.userInfo} >
-                                <Text style={{ fontWeight: "bold" }}>{user?.email}</Text>님의 검진결과 구강위험 <Text style={{ color: "red", fontWeight: "bold" }}> Level 1</Text> 입니다.
+                                <Text style={{ fontWeight: "bold" }}>{name}</Text>님의 검진결과 구강위험 <Text style={{ color: "red", fontWeight: "bold" }}> Level 1</Text> 입니다.
                             </Paragraph>
                             <View style={{ flexDirection: "row", alignItems: "center" }}>
                                 <View style={{ marginRight: 10, flexDirection: "row", alignItems: "center" }}>
@@ -81,9 +99,9 @@ const HomeScreen = (props: { navigation: string[]; }) => {
                     </Card>
                 </View>
             </View>
-            {LogoutButton(props.navigation)}
+            <LogoutButton />
 
-        </View>
+        </ScrollView>
     );
 };
 
