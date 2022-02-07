@@ -23,13 +23,8 @@ export default function LoginScreen(props: { navigation: string[]; }) {
                 setVisible(true)
                 setUserId("")
                 setUserPw("")
-
-                //AUTH CHECK LOGIC SHOULD BE ADDED!****************************
-                await AsyncStorage.setItem('userId', userId);
                 setLoading(false);
-                props.navigation.push('Home');
-                // props.navigation.push('Call');
-                // props.navigation.push('Chat');
+                props.navigation.push("Home");
             }
         } catch (err) {
             console.log('Error', err);

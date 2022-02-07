@@ -25,6 +25,7 @@ const HomeScreen = (props: { navigation: string[]; }) => {
         if (name !== "") {
             //add current logged in users in firestore to see who is in
             firestore().collection('currentUsers').doc(user?.uid).set({
+                userUid: user?.uid,
                 userName: name
             })
         }
