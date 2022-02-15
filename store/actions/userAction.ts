@@ -1,5 +1,5 @@
 import { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
-import { CHAT_REQUEST, CHAT_REQUESTOR, CURRENT_USER_AUTH, CURRENT_USER_NAME, LANGUAGE, OTHER_USER_NAME, SELECTED_USER, VOICE_SCRIPT } from "./types";
+import { CHAT_REQUEST, CHAT_REQUESTOR, CURRENT_USER_AUTH, CURRENT_USER_NAME, LANGUAGE, OTHER_USER_NAME, SELECTED_USER, SELECTED_USER_INFO, VOICE_SCRIPT } from "./types";
 
 export const setCurrentUsername = (name: string) => (dispatch: (arg0: { type: string; payload: any; }) => void) => {
     dispatch({
@@ -25,9 +25,9 @@ export const setCurrentUsername = (name: string) => (dispatch: (arg0: { type: st
       payload: user,
     });
   };
-  export const setSelectedUserInfo = (user:{}) =>  (dispatch: (arg0: { type: string; payload: any; }) => void) => {
+  export const setSelectedUserInfo = (user: { targetUserUid: any; targetUserName: any; roomUserlist: any[]; roomUserName: any[]; roomId: string; }) =>  (dispatch: (arg0: { type: string; payload: any; }) => void) => {
     dispatch({
-      type: SELECTED_USER,
+      type: SELECTED_USER_INFO,
       payload: user,
     });
   };

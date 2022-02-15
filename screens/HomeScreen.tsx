@@ -20,11 +20,17 @@ const HomeScreen = (props: { navigation: string[]; }) => {
         props.navigation.push("Login")
     }
     useEffect(() => {
+        return () => {
+        }
+    }, [])
+
+    useEffect(() => {
         //get username with the user uid from auth 
         firestore().collection("users").doc(user?.uid).get().then(doc => {
             // setName(doc.data()?.name)
             dispatch(setCurrentUsername(doc.data()?.name))
         })
+
         dispatch(setCurrentUserAuth(user?.uid))
     }, [user])
 

@@ -63,10 +63,8 @@ const UserListScreen = (props: { navigation: any }) => {
         }).then(() => {
             if (exist) {
                 room = `@make@${user.userUid}@with@${currentUserUid}`
-                console.log("상대가 만든 방이 잇군", room)
             } else {
                 room = `@make@${currentUserUid}@with@${user.userUid}`
-                console.log("내가 만든게 잇거나 아님 암것도 없거나 ", room)
             }
 
             const info = {

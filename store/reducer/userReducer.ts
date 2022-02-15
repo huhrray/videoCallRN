@@ -6,6 +6,7 @@ import {
   LANGUAGE,
   OTHER_USER_NAME,
   SELECTED_USER,
+  SELECTED_USER_INFO,
   VOICE_SCRIPT,
 } from '../actions/types';
 
@@ -34,6 +35,8 @@ export function userReducer(
       return { ...state, otherUserName: action.payload };
     case SELECTED_USER:
       return { ...state, selectedUser: action.payload };
+    case SELECTED_USER_INFO:
+      return { ...state, selectedUserInfo: action.payload };
     case CHAT_REQUEST:
       return { ...state, request: action.payload };
     case CHAT_REQUESTOR:
