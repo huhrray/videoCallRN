@@ -1,6 +1,7 @@
 import {
   CHAT_REQUEST,
   CHAT_REQUESTOR,
+  CURRENT_USER_AUTH,
   CURRENT_USER_NAME,
   LANGUAGE,
   OTHER_USER_NAME,
@@ -10,8 +11,10 @@ import {
 
 const initialState = {
   currentUserName: '',
+  currentUserUid:null,
   otherUserName: '',
   selectedUser: null,
+  selectedUserInfo: null,
   request: false,
   requestor: '',
   script: "",
@@ -25,6 +28,8 @@ export function userReducer(
   switch (action.type) {
     case CURRENT_USER_NAME:
       return { ...state, currentUserName: action.payload };
+    case CURRENT_USER_AUTH:
+      return { ...state, currentUserUid: action.payload };
     case OTHER_USER_NAME:
       return { ...state, otherUserName: action.payload };
     case SELECTED_USER:

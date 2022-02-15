@@ -12,7 +12,7 @@ interface Props {
 }
 function ButtonContainer(props: Props) {
     return (
-        <View style={props.style ? styles.callEndBtnContainer : styles.bContainer}>
+        <View style={styles.bContainer}>
             <Button iconName="phone-slash" backgroundColor="red" onPress={props.hangup} />
         </View>
     );
@@ -35,7 +35,6 @@ export default function Video(props: Props) {
     if (props.localStream && props.remoteStream) {
         return (
             <View style={styles.container}>
-                <ButtonContainer hangup={props.hangup} style={true} />
                 <RTCView
                     streamURL={props.remoteStream.toURL()}
                     objectFit={"cover"}
@@ -46,10 +45,10 @@ export default function Video(props: Props) {
                     objectFit={"cover"}
                     style={styles.videoLocal}
                 />
-                <View style={styles.cContainer}>
+                <ButtonContainer hangup={props.hangup} />
+                {/* <View style={styles.cContainer}>
                     {ChatContainer(props.message)}
-                </View>
-
+                </View> */}
             </View>
         );
     }
@@ -85,6 +84,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
     },
     callEndBtnContainer: {
-
+        flexDirection: "row",
+        bottom: 30,
     }
 });

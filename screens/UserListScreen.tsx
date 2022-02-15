@@ -4,11 +4,18 @@ import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firest
 import { Button } from 'react-native-paper';
 import ChatRoom from '../components/ChatRoom';
 import auth from '@react-native-firebase/auth';
+import Icon from 'react-native-vector-icons/FontAwesome5';
+import { RootState } from '../store';
+import { useDispatch, useSelector } from 'react-redux';
+import { setChatRequest, setSelectedUser, setSelectedUserInfo } from '../store/actions/userAction';
+import Modal from 'react-native-modal'
+import { changeTimeFormat } from '../functions/common';
 
-const UserListScreen = (props: { navigation: string[]; }) => {
+const UserListScreen = (props: { navigation: any }) => {
     const [userList, setUserList] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
-    const [selectedUser, setSelectedUser] = useState<{}>();
 
+    const { request, currentUserName, requestor, currentUserUid } = useSelector((state: RootState) => state.userReducer)
+    const dispatch = useDispatch()
     useEffect(() => {
         //get realtime userlist
         const userRef = firestore()
@@ -18,7 +25,10 @@ const UserListScreen = (props: { navigation: string[]; }) => {
                 const users: FirebaseFirestoreTypes.DocumentData[] = []
                 changes.forEach(change => {
                     if (change.type == 'added') {
-                        change.doc.data().userUid !== auth().currentUser?.uid && setUserList([...userList, change.doc.data()])
+                        if (change.doc.data().userUid !== currentUserUid) {
+                            users.push(change.doc.data())
+                            setUserList(users)
+                        }
                     } else if (change.type == 'removed') {
                         const currentUsers = userList.filter(
                             item => item !== change.doc.data().userName,
@@ -26,33 +36,86 @@ const UserListScreen = (props: { navigation: string[]; }) => {
                         setUserList(currentUsers);
                     }
                 });
-            });
+            })
+
         return () => {
             userRef();
+            // chatSubscribe()
         };
+
     }, []);
+
+    const isRoomExist = (docId: string) => {
+        return firestore().collection('chat').doc(docId).get().then((doc) => {
+            return doc.exists
+        })
+    }
+
+    const moveToChatRoom = (user: FirebaseFirestoreTypes.DocumentData) => {
+        let room: string
+        let exist: boolean = false
+        firestore().collection('chat').doc(`@make@${user.userUid}@with@${currentUserUid}`).collection('message').get().then(doc => {
+            doc.forEach(data => {
+                if (data.exists) {
+                    exist = true
+                }
+            })
+        }).then(() => {
+            if (exist) {
+                room = `@make@${user.userUid}@with@${currentUserUid}`
+                console.log("상대가 만든 방이 잇군", room)
+            } else {
+                room = `@make@${currentUserUid}@with@${user.userUid}`
+                console.log("내가 만든게 잇거나 아님 암것도 없거나 ", room)
+            }
+
+            const info = {
+                targetUserUid: user.userUid,
+                targetUserName: user.userName,
+                roomUserlist: [user.userUid, currentUserUid],// 챗방 유저리스트 
+                roomUserName: [user.userName, currentUserName], // 챗방 유저 이름 
+                roomId: room
+            }
+            dispatch(setSelectedUserInfo(info))
+            props.navigation.push("Chat", { roomId: room, roomTitle: user.userName })
+        })
+
+
+    }
+
 
     const renderUser = (user: FirebaseFirestoreTypes.DocumentData) => {
         return (
-            <Button
-                mode="contained"
-                onPress={() => {
-                    // setSelectedUser(user.userUid);
-                    setSelectedUser(user)
-                    // props.navigation.push("Chat", user.userUid)
-                }}
-                style={[styles.userBtn]}
-                color="#D3D3D3">
-                {user.userName}
-            </Button>
+            <View style={styles.userBtn}>
+                <Text style={styles.userName}>{user.userName}</Text>
+                <Icon
+                    name="comments"
+                    onPress={() => moveToChatRoom(user)}
+                    color="green"
+                    style={styles.Btn}
+                    size={20}
+                />
+                <Icon
+                    name="video"
+                    onPress={() => {
+                        dispatch(setSelectedUser(user))
+                        props.navigation.push("Call")
+                    }}
+                    color="red"
+                    style={styles.Btn}
+                    size={20}
+                />
+            </View>
+
         );
     };
-    if (selectedUser) {
-        return (
-            <ChatRoom selectedUser={selectedUser} currentUser={auth().currentUser} />
-        )
+    const acceptChat = () => {
+        dispatch(setChatRequest(false))
+        props.navigation.push("Chat", { name: requestor })
     }
-
+    const handleLeave = () => {
+        dispatch(setChatRequest(false))
+    }
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.title}>현재 접속 중인 유저</Text>
@@ -62,6 +125,23 @@ const UserListScreen = (props: { navigation: string[]; }) => {
                 renderItem={user => renderUser(user.item)}
                 keyExtractor={(item, index) => index.toString()}
             />
+            {/* <Modal isVisible={request && currentUserName !== requestor} onDismiss={() => dispatch(setChatRequest(false))} >
+                <View
+                    style={{
+                        backgroundColor: 'white',
+                        padding: 22,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        borderRadius: 4,
+                        borderColor: 'rgba(0, 0, 0, 0.1)',
+                    }}>
+                    <Text>{requestor}이 메세지를 보냈습니다. 채팅창으로 이동하시겠습니까?</Text>
+                    <Button onPress={acceptChat}>수락</Button>
+                    <Button testID="Reject Call" onPress={handleLeave}>
+                        거절
+                    </Button>
+                </View>
+            </Modal> */}
         </SafeAreaView>
     );
 };
@@ -72,6 +152,7 @@ const styles = StyleSheet.create({
     container: {
         justifyContent: 'center',
         alignItems: 'center',
+        marginHorizontal: 15
     },
     title: {
         fontSize: 18,
@@ -82,10 +163,35 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     userBtn: {
-        padding: 2,
-        marginHorizontal: 20,
-        marginVertical: 3,
+        width: "100%",
+        height: 60,
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        elevation: 3,
+        marginVertical: 5,
     },
+    userName: {
+        marginHorizontal: 70,
+        fontSize: 20,
+        fontWeight: "bold"
+    },
+    Btn: {
+        marginHorizontal: 20,
+        justifyContent: "center",
+        alignItems: "center",
+        borderRadius: 100,
+
+    },
+    modal: {
+        backgroundColor: 'white',
+        padding: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 4,
+        borderColor: 'rgba(0, 0, 0, 0.1)',
+    }
+
 });
 
 

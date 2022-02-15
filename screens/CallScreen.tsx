@@ -14,8 +14,8 @@ import Utils from '../components/Utils';
 import firestore, {
     FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
-import ChatContainer from '../components/ChatContainer';
 import { GiftedChat } from 'react-native-gifted-chat';
+import UserListScreen from './UserListScreen';
 const SIGNALING_SERVER_URL = 'http://192.168.0.2:7000';
 const TURN_SERVER_URL = '192.168.0.2:3478';
 const TURN_SERVER_USERNAME = 'seyhuh';

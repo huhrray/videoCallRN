@@ -16,6 +16,8 @@ target 'videoCallRN' do
 
   pod 'RNSVG', :path => '../node_modules/react-native-svg'
 
+  pod 'react-native-voice', :path => '../node_modules/@react-native-voice/voice'
+
   target 'videoCallRNTests' do
     inherit! :complete
     # Pods for testing

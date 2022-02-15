@@ -4,17 +4,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Bubble, GiftedChat, IMessage, InputToolbar, Message, Send, SendProps } from 'react-native-gifted-chat';
 import firestore from '@react-native-firebase/firestore'
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store';
+import auth from '@react-native-firebase/auth'
+import { changeTimeFormat } from '../functions/common';
 
-export default function ChatScreen() {
+export default function ChatScreen(props: { navigation: any; route: any }) {
     //To ignore keyboardDidHide evnerListener deprecation warning at firestore 
+    const { roomId, roomTitle } = props.route.params
     LogBox.ignoreLogs(['EventEmitter.removeListener'])
-    const [userId, setUserId] = useState("")
-    const [userInfo, setUserInfo] = useState({ _id: userId, avatar: require("../img/patient_no_img.png") })
+    const { currentUserUid, selectedUser } = useSelector((state: RootState) => state.userReducer)
+    const dispatch = useDispatch()
+    const [userInfo, setUserInfo] = useState({ _id: currentUserUid, avatar: require("../img/patient_no_img.png") })
     const [message, setMessage] = useState([])
     useEffect(() => {
-        getUser()
         // for real time update
-        const subscribe = firestore().collection('chatId').onSnapshot((snapshot) => {
+        console.log(roomId)
+        const subscribe = firestore().collection('chat').doc(roomId).collection("message").onSnapshot(snapshot => {
             snapshot.docChanges().forEach((change) => {
                 if (change.type == "added") {
                     let data: any = change.doc.data()
@@ -23,19 +29,16 @@ export default function ChatScreen() {
                 }
             })
         })
+
         return () => {
             subscribe();
         }
-
     }, [])
 
-    async function getUser() {
-        let userLocal = await AsyncStorage.getItem("userId")
-        if (userLocal) setUserId(userLocal)
-    }
     function onSend(messages: IMessage[]) {
-        // for storing in Firestore
-        firestore().collection('chatId').doc(Date.now().toString()).set(messages[0])
+        // send msg to roomId collection in Firestore
+        // firestore().collection('chat').doc(selectedUser.userUid).collection('message').doc().collection('room').doc(Date.now().toString()).set(messages[0])
+        firestore().collection('chat').doc(roomId).collection("message").doc(changeTimeFormat()).set(messages[0])
     }
 
 
@@ -116,14 +119,14 @@ export default function ChatScreen() {
     return (
         <View style={styles.chatContainer}>
             <GiftedChat messages={message}
-                renderInputToolbar={props => customtInputToolbar(props)}
-                renderBubble={props => customtBubble(props)}
+                // renderInputToolbar={props => customtInputToolbar(props)}
+                // renderBubble={props => customtBubble(props)}
                 renderTime={() => null}
                 renderUsernameOnMessage={true}
-                renderMessage={props => customtMessage(props)}
+                // renderMessage={props => customtMessage(props)}
                 onSend={(messages) => onSend(messages)}
                 renderAvatar={() => null}
-                renderSend={props => customSendBtn(props)}
+                // renderSend={props => customSendBtn(props)}
                 user={userInfo}
             />
 

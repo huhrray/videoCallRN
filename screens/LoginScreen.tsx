@@ -6,9 +6,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import firestore from '@react-native-firebase/firestore';
 import auth from "@react-native-firebase/auth"
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store';
+import { setCurrentUserAuth } from '../store/actions/userAction';
 
 export default function LoginScreen(props: { navigation: string[]; }) {
-    const [userName, setUserName] = useState("")
     const [userId, setUserId] = useState("")
     const [userPw, setUserPw] = useState("")
     const [loading, setLoading] = useState(false);

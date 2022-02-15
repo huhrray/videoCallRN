@@ -22,7 +22,7 @@ export default function RegisterScreen(props: { navigation: string[] }) {
                 setEmail('');
                 setPassword('');
                 //모달 띄우거나 알림으로 완료 알림
-                props.navigation.push('Home')
+                // props.navigation.push('Home')
             };
         } catch (e: any) {
             if (e.code === 'auth/email-already-in-use') {

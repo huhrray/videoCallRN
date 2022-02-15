@@ -1,35 +1,42 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import { LogBox, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useReducer, useState } from 'react';
 import auth from '@react-native-firebase/auth'
 import { Card, Divider, Paragraph } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LogoutButton from '../components/LogoutButton';
 import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useDispatch, useSelector } from 'react-redux';
+import { setCurrentUserAuth, setCurrentUsername } from '../store/actions/userAction';
+import { RootState } from '../store';
 
 const HomeScreen = (props: { navigation: string[]; }) => {
-    const [name, setName] = useState("")
+    LogBox.ignoreAllLogs()
+    const { currentUserName } = useSelector((state: RootState) => state.userReducer)
+    // const [name, setName] = useState("")
     const user = auth().currentUser
-
+    const dispatch = useDispatch()
     if (user === null) {
         props.navigation.push("Login")
     }
     useEffect(() => {
         //get username with the user uid from auth 
         firestore().collection("users").doc(user?.uid).get().then(doc => {
-            setName(doc.data()?.name)
+            // setName(doc.data()?.name)
+            dispatch(setCurrentUsername(doc.data()?.name))
         })
+        dispatch(setCurrentUserAuth(user?.uid))
     }, [user])
 
     useEffect(() => {
-        if (name !== "") {
+        if (currentUserName !== "") {
             //add current logged in users in firestore to see who is in
             firestore().collection('currentUsers').doc(user?.uid).set({
                 userUid: user?.uid,
-                userName: name
+                userName: currentUserName
             })
         }
-    }, [name])
+    }, [currentUserName])
 
     return (
         <ScrollView style={styles.root}>
@@ -40,7 +47,7 @@ const HomeScreen = (props: { navigation: string[]; }) => {
                         <Icon name="circle-slice-1" color="red" size={100} />
                         <View style={styles.patientCardText}>
                             <Paragraph style={styles.userInfo} >
-                                <Text style={{ fontWeight: "bold" }}>{name}</Text>님의 검진결과 구강위험 <Text style={{ color: "red", fontWeight: "bold" }}> Level 1</Text> 입니다.
+                                <Text style={{ fontWeight: "bold" }}>{currentUserName}</Text>님의 검진결과 구강위험 <Text style={{ color: "red", fontWeight: "bold" }}> Level 1</Text> 입니다.
                             </Paragraph>
                             <View style={{ flexDirection: "row", alignItems: "center" }}>
                                 <View style={{ marginRight: 10, flexDirection: "row", alignItems: "center" }}>
@@ -60,14 +67,14 @@ const HomeScreen = (props: { navigation: string[]; }) => {
             <View style={styles.bContainer}>
                 <Text style={styles.subheading}>원하시는 치료를 받아보세요</Text>
                 <View style={styles.cardContainer}>
-                    <Card style={styles.card}>
+                    <Card style={styles.card} onPress={() => props.navigation.push('STT')}>
                         <Card.Content style={styles.cardContent}>
                             <Icon name="star-four-points-outline" color="#2247f1" size={35} />
                             <Text>치아미백</Text>
                         </Card.Content>
                     </Card>
-                    <Card style={styles.card}>
-                        <Card.Content style={styles.cardContent}>
+                    <Card style={styles.card} onPress={() => props.navigation.push('Chat2')}>
+                        <Card.Content style={styles.cardContent} >
                             <Icon name="screw-lag" color="#2247f1" size={35} />
                             <Text>임플란트</Text>
                         </Card.Content>
