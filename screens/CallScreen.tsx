@@ -14,9 +14,9 @@ import Utils from '../components/Utils';
 import firestore, {
     FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
-import { GiftedChat } from 'react-native-gifted-chat';
-import UserListScreen from './UserListScreen';
-const SIGNALING_SERVER_URL = 'http://192.168.0.2:7000';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store';
+
 const TURN_SERVER_URL = '192.168.0.2:3478';
 const TURN_SERVER_USERNAME = 'seyhuh';
 const TURN_SERVER_CREDENTIAL = '1234';
@@ -38,15 +38,18 @@ const PC_CONFIG = {
 };
 const configuration = { iceServers: [{ url: 'stun:stun.l.google.com:19302' }] };
 
-export default function CallScreen(props: { navigation: string[]; }) {
+export default function CallScreen(props: { navigation: any; route: any }) {
     const [localStream, setLocalStream] = useState<MediaStream | null>();
     const [remoteStream, setRemoteStream] = useState<MediaStream | null>();
     const [gettingCall, setGettingCall] = useState(false);
     const [message, setMessage] = useState([])
     const pc = useRef<RTCPeerConnection>();
     const connecting = useRef(false);
+    const dispatch = useDispatch();
+    const { currentUserName, currentUserUid, selectedUserInfo } = useSelector((state: RootState) => state.userReducer);
+    const { roomId, roomTitle } = props.route.params;
     useEffect(() => {
-        const cRef = firestore().collection('meet').doc('chatId');
+        const cRef = firestore().collection('call').doc(roomId);
         const subscribe = cRef.onSnapshot(snapshot => {
             const data = snapshot.data();
 
@@ -55,13 +58,14 @@ export default function CallScreen(props: { navigation: string[]; }) {
                 pc.current.setRemoteDescription(new RTCSessionDescription(data.answer));
             }
 
-            // if there is offer for chatId set the getting call flag
-            if (data && data.offer && !connecting.current) {
+            // if there is offer for roomId set the getting call flag
+            if (data && data.offer && data.callee === currentUserUid && !connecting.current) {
+                // dispatch(setIncomingCall(true))
                 setGettingCall(true);
             }
         });
         //on delete of collection call hangup
-        //the other side has clicekd on hangup
+        //the other side has clicekd on hangup in the call screen
         const subscribeDelete = cRef.collection('callee').onSnapshot(snapshot => {
             snapshot.docChanges().forEach(change => {
                 if (change.type === 'removed') {
@@ -69,20 +73,16 @@ export default function CallScreen(props: { navigation: string[]; }) {
                 }
             });
         });
-
-        // for real time update
-        const subscribeChat = firestore().collection('chatId').onSnapshot((snapshot) => {
-            snapshot.docChanges().forEach((change) => {
-                if (change.type == "added") {
-                    let data: any = change.doc.data()
-                    data.createdAt = data.createdAt.toDate()
-                    setMessage((prevMessage) => GiftedChat.append(prevMessage, data))
+        //the other side has clicekd on hangup in the modal
+        const subscribeDeleteModal = firestore().collection('incoming').onSnapshot(snapshot => {
+            snapshot.docChanges().forEach(change => {
+                if (change.type === 'removed') {
+                    hangup();
                 }
-            })
-        })
+            });
+        });
         return () => {
             subscribe();
-            subscribeChat()
             subscribeDelete();
         };
     }, []);
@@ -105,11 +105,12 @@ export default function CallScreen(props: { navigation: string[]; }) {
         console.log('calling');
         connecting.current = true;
 
+        firestore().collection('incoming').add({ type: 'call', roomId: roomId, callerName: currentUserName, callerUid: currentUserUid, calleeUid: selectedUserInfo.targetUserUid })
         //setup webrtc
         await setupWebrtc();
 
         //document for the call
-        const cRef = firestore().collection('meet').doc('chatId');
+        const cRef = firestore().collection('call').doc(roomId);
 
         //exchange the candidate between the caller and callee
         collectIceCandidates(cRef, 'caller', 'callee');
@@ -125,6 +126,8 @@ export default function CallScreen(props: { navigation: string[]; }) {
                     type: offer.type,
                     sdp: offer.sdp,
                 },
+                caller: currentUserUid,
+                callee: selectedUserInfo.targetUserUid
             };
             cRef.set(cWithOffer);
         }
@@ -134,7 +137,7 @@ export default function CallScreen(props: { navigation: string[]; }) {
         console.log('joining the call');
         connecting.current = true;
         setGettingCall(false);
-        const cRef = firestore().collection('meet').doc('chatId');
+        const cRef = firestore().collection('call').doc(roomId);
         const offer = (await cRef.get()).data()?.offer;
 
         if (offer) {
@@ -182,7 +185,8 @@ export default function CallScreen(props: { navigation: string[]; }) {
     };
 
     const firestoreSCleanup = async () => {
-        const cRef = firestore().collection('meet').doc('chatId');
+        const cRef = firestore().collection('call').doc(roomId);
+
         if (cRef) {
             const calleeCandidate = await cRef.collection('callee').get();
             calleeCandidate.forEach(async candidate => {
@@ -192,6 +196,10 @@ export default function CallScreen(props: { navigation: string[]; }) {
             callerCandidate.forEach(async candidate => {
                 await candidate.ref.delete();
             });
+            const listener = await firestore().collection('incoming').get();
+            listener.forEach(async doc => {
+                await doc.ref.delete()
+            })
             cRef.delete();
         }
     };

@@ -3,17 +3,20 @@ import LoginScreen from './screens/LoginScreen';
 import CallScreen from './screens/CallScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import ChatScreen from './screens/ChatScreen';
 import RegisterScreen from './screens/RegistScreen';
 import HomeScreen from './screens/HomeScreen';
 import auth from '@react-native-firebase/auth';
 import UserListScreen from './screens/UserListScreen';
 import VoiceSTT from './screens/VoiceSTT';
-import { Provider } from 'react-redux';
-import Store from './store';
+import { Provider, useDispatch, useSelector } from 'react-redux';
+import Store, { RootState } from './store';
 import { hanldeShutDown } from './functions/firebaseUser';
 import { useAppState } from '@react-native-community/hooks'
+import Modal from 'react-native-modal';
+import { setIncomingCall } from './store/actions/userAction';
+import { Button } from 'react-native-paper';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +26,8 @@ export default function App() {
   const [user, setUser] = useState();
   const currentAppState = useAppState()
   console.log("currentApp State:::", currentAppState)
+
+
   // Handle user state 
   function onAuthStateChanged(user: any) {
     setUser(user);
@@ -37,6 +42,7 @@ export default function App() {
     }; // unsubscribe on unmount
   }, []);
   if (initializing) return null;
+
 
   if (!user) {
     return (
@@ -64,9 +70,9 @@ export default function App() {
     );
   } else {
     return (
+
       <NavigationContainer>
         <Provider store={Store}>
-
           <Stack.Navigator
             screenOptions={{
               headerStyle: {
@@ -85,7 +91,10 @@ export default function App() {
               options={({ route }: any) => ({
                 title: route.params.roomTitle
               })} />
-            <Stack.Screen name="Call" component={CallScreen} />
+            <Stack.Screen name="Call" component={CallScreen}
+              options={({ route }: any) => ({
+                title: route.params.roomTitle
+              })} />
             <Stack.Screen name="STT" component={VoiceSTT} />
           </Stack.Navigator>
 

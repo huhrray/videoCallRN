@@ -1,15 +1,13 @@
-import { FlatList, LogBox, StyleSheet, Text, View } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { Bubble, GiftedChat, IMessage, InputToolbar, Message, Send } from 'react-native-gifted-chat';
+import { FlatList, KeyboardAvoidingView, LogBox, Platform, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { changeTimeFormat } from '../functions/common';
 import Voice from '@react-native-voice/voice';
 import SystemSetting from 'react-native-system-setting';
 import { setVoiceScript } from '../store/actions/userAction';
-import { IconButton, TextInput } from 'react-native-paper';
+import { TextInput } from 'react-native-paper';
 import 'react-native-get-random-values'
 import { v4 as uuidv4 } from 'uuid';
 
@@ -27,8 +25,15 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
     const [message, setMessage] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
     const [text, setText] = useState<string>('');
     const [isRecord, setIsRecord] = useState<boolean>(false);
-
+    const flatListRef = useRef<FlatList<any>>(null);
     useEffect(() => {
+        //voice recognition 
+        Voice.onSpeechStart = _onSpeechStart;
+        Voice.onSpeechEnd = _onSpeechEnd;
+        Voice.onSpeechRecognized = _onSpeechRecognized;
+        Voice.onSpeechResults = _onSpeechResults;
+        Voice.onSpeechError = _onSpeechError;
+        setTimeout(() => flatListRef.current?.scrollToEnd(), 300)
         // for real time update
         const subscribe = firestore()
             .collection('chat')
@@ -39,7 +44,6 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
                     if (change.type == 'added') {
                         let data: FirebaseFirestoreTypes.DocumentData = change.doc.data();
                         data.createdAt = data.createdAt.toDate();
-                        // setMessage(prevMessage => GiftedChat.append(prevMessage, data));
                         setMessage(prev => [...prev, data])
                     }
                 });
@@ -47,20 +51,23 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
 
         return () => {
             subscribe();
+            Voice.destroy().then(Voice.removeAllListeners);
         };
     }, []);
 
-    async function onSend(messages: IMessage[], type: string) {
-        console.log(messages[0], '메세지쓰');
-        // send msg to roomId collection in Firestore
-        let msg = messages[0];
-        if (type === 'voice') {
-            Object.assign(msg, { type: 'voice' });
-        } else {
-            Object.assign(msg, { type: 'text' });
-        }
-        firestore().collection('chat').doc(roomId).collection('message').doc(changeTimeFormat()).set(msg);
-    }
+    useEffect(() => {
+        Voice.start(language);
+        setIsRecord(true);
+    }, [Voice]);
+
+    useEffect(() => {
+        // isRecord ? setLabel("받아쓰기 중....") : setLabel("마이크가 꺼져있습니다.")
+        //녹음시작 종료시마다 시스템 알림음 발생, disable 불가 임시방편으로 볼륨 0으로 조정
+        isRecord && SystemSetting.setVolume(0, { type: 'alarm' });
+    }, [isRecord]);
+    useEffect(() => {
+        dispatch(setVoiceScript(script + text));
+    }, [text]);
 
     function sendMsg(message: string, type: string) {
         // send msg to roomId collection in Firestore
@@ -80,28 +87,6 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
 
     }
 
-    useEffect(() => {
-        Voice.onSpeechStart = _onSpeechStart;
-        Voice.onSpeechEnd = _onSpeechEnd;
-        Voice.onSpeechRecognized = _onSpeechRecognized;
-        Voice.onSpeechResults = _onSpeechResults;
-        Voice.onSpeechError = _onSpeechError;
-
-        return () => {
-            Voice.destroy().then(Voice.removeAllListeners);
-        };
-    }, []);
-
-    useEffect(() => {
-        Voice.start(language);
-        setIsRecord(true);
-    }, [Voice]);
-
-    useEffect(() => {
-        // isRecord ? setLabel("받아쓰기 중....") : setLabel("마이크가 꺼져있습니다.")
-        //녹음시작 종료시마다 시스템 알림음 발생, disable 불가 임시방편으로 볼륨 0으로 조정
-        isRecord && SystemSetting.setVolume(0, { type: 'alarm' });
-    }, [isRecord]);
 
     const handleRecord = () => {
         isRecord ? Voice.destroy() : Voice.start(language);
@@ -123,7 +108,7 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         console.log('여기서 script????????', script);
         setText(event.value[0]);
         sendMsg(event.value[0], 'voice')
-        //한번 인식이 끝나면 음성인식기가 꺼지기때문에 음성인식기를 강제로 다시 켜주는 역할
+        //force the listener starts again when it finishes recognition
         Voice.isRecognizing().then(event => {
             // console.log("다시 킬까봐", event)
             !event && Voice.start(language);
@@ -141,9 +126,6 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         }
     };
 
-    useEffect(() => {
-        dispatch(setVoiceScript(script + text));
-    }, [text]);
     const colorStyle = (item: any) => {
         if (item.user._id === currentUserUid) {
             if (item.type === 'voice') {
@@ -167,43 +149,51 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         )
     };
 
+
     return (
         <View style={styles.chatContainer}>
-            <View style={styles.chatLogContainer}>
-                <FlatList
-                    data={message}
-                    renderItem={msg => renderMessage(msg)}
-                    keyExtractor={(item, index) => index.toString()}
-                />
-            </View>
-            <View style={styles.inputContainer}>
-                <TextInput
-                    mode="outlined"
-                    activeOutlineColor="#2247f1"
-                    style={styles.inputBox}
-                    value={textInput}
-                    onChangeText={text => setTextInput(text)}
-                    autoFocus
-                    theme={{ roundness: 30 }}
-                    left={
-                        <TextInput.Icon
-                            name="microphone"
-                            color={isRecord ? '#2247f1' : 'grey'}
-                            size={30}
-                            onPress={handleRecord}
-                        />
-                    }
-                    right={
-                        textInput.length > 0 &&
-                        < TextInput.Icon
-                            name="arrow-up-circle"
-                            color="red"
-                            size={30}
-                            onPress={() => sendMsg(textInput, 'text')}
-                        />
-                    }
-                />
-            </View>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={{ flex: 1 }}>
+                <View style={styles.chatLogContainer}>
+                    <FlatList
+                        ref={flatListRef}
+                        data={message}
+                        onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+                        renderItem={msg => renderMessage(msg)}
+                        keyExtractor={(item, index) => index.toString()}
+                    />
+                </View>
+                <KeyboardAvoidingView style={{ marginHorizontal: 10 }}>
+                    <TextInput
+                        mode="outlined"
+                        outlineColor="#2247f1"
+                        activeOutlineColor='#2247f1'
+                        style={styles.inputBox}
+                        value={textInput}
+                        onChangeText={text => setTextInput(text)}
+                        theme={{ roundness: 30 }}
+                        left={
+                            <TextInput.Icon
+                                name="microphone"
+                                color={isRecord ? '#2247f1' : 'grey'}
+                                size={30}
+                                onPress={handleRecord}
+                            />
+                        }
+                        right={
+                            textInput.length > 0 &&
+                            < TextInput.Icon
+                                name="arrow-up-circle"
+                                color="red"
+                                size={30}
+                                onPress={() => sendMsg(textInput, 'text')}
+                            />
+                        }
+                    />
+                </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+
         </View>
     );
 }
@@ -211,28 +201,18 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
 const styles = StyleSheet.create({
     chatContainer: {
         flex: 1,
-        justifyContent: 'center',
-        alignContent: 'center',
+        flexDirection: 'column-reverse'
+        // height: "100%",
+        // alignContent: 'center',
     },
-    inputContainer: {
-        position: 'absolute',
-        bottom: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginHorizontal: 15,
-        fontSize: 10
-
+    chatLogContainer: {
+        width: "100%",
+        height: '87%',
     },
     inputBox: {
         width: "100%",
-    },
-
-    chatLogContainer: {
-        position: 'absolute',
-        width: "100%",
-        top: 0,
-        // backgroundColor: 'blue',
-        height: 520
+        height: 50,
+        paddingTop: 5
     },
     myBubble: {
         alignSelf: 'flex-end',

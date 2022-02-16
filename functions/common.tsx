@@ -1,3 +1,5 @@
+import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+
 /** * 현재날짜 yyyyMMddHHmmsss형태로 반환 */
 export function changeTimeFormat() {
     var vDate = new Date();
@@ -45,3 +47,23 @@ export function timeStampToTime(timestamp: string) {
 };
 
 function addZero(n: number) { return n > 9 ? "" + n : "0" + n; }
+
+export const firestoreDelete = async (roomId: string) => {
+    const cRef = firestore().collection('call').doc(roomId);
+
+    if (cRef) {
+        const calleeCandidate = await cRef.collection('callee').get();
+        calleeCandidate.forEach(async candidate => {
+            await candidate.ref.delete();
+        });
+        const callerCandidate = await cRef.collection('caller').get();
+        callerCandidate.forEach(async candidate => {
+            await candidate.ref.delete();
+        });
+        const listener = await firestore().collection('incoming').get();
+        listener.forEach(async doc => {
+            await doc.ref.delete()
+        })
+        cRef.delete();
+    }
+};

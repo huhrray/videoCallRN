@@ -1,5 +1,5 @@
 import { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
-import { CHAT_REQUEST, CHAT_REQUESTOR, CURRENT_USER_AUTH, CURRENT_USER_NAME, LANGUAGE, OTHER_USER_NAME, SELECTED_USER, SELECTED_USER_INFO, VOICE_SCRIPT } from "./types";
+import { CHAT_REQUEST, CHAT_REQUESTOR, CURRENT_USER_AUTH, CURRENT_USER_NAME, INCOMING_CALL, LANGUAGE, OTHER_USER_NAME, SELECTED_USER, SELECTED_USER_INFO, VOICE_SCRIPT } from "./types";
 
 export const setCurrentUsername = (name: string) => (dispatch: (arg0: { type: string; payload: any; }) => void) => {
     dispatch({
@@ -58,3 +58,9 @@ export const setCurrentUsername = (name: string) => (dispatch: (arg0: { type: st
     });
   }
   
+  export const setIncomingCall = (isCalling: boolean) =>(dispatch: (arg0: { type: string; payload: any; }) => void) =>{
+    dispatch({
+      type: INCOMING_CALL,
+      payload: isCalling,
+    });
+  }

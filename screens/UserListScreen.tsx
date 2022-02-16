@@ -1,15 +1,10 @@
 import { FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import { Button } from 'react-native-paper';
-import ChatRoom from '../components/ChatRoom';
-import auth from '@react-native-firebase/auth';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { RootState } from '../store';
 import { useDispatch, useSelector } from 'react-redux';
 import { setChatRequest, setSelectedUser, setSelectedUserInfo } from '../store/actions/userAction';
-import Modal from 'react-native-modal'
-import { changeTimeFormat } from '../functions/common';
 
 const UserListScreen = (props: { navigation: any }) => {
     const [userList, setUserList] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
@@ -45,11 +40,6 @@ const UserListScreen = (props: { navigation: any }) => {
 
     }, []);
 
-    const isRoomExist = (docId: string) => {
-        return firestore().collection('chat').doc(docId).get().then((doc) => {
-            return doc.exists
-        })
-    }
 
     const moveToChatRoom = (user: FirebaseFirestoreTypes.DocumentData) => {
         let room: string
@@ -81,6 +71,21 @@ const UserListScreen = (props: { navigation: any }) => {
 
     }
 
+    const moveToCallRoom = (user: FirebaseFirestoreTypes.DocumentData) => {
+        let room: string = `@call@${user.userUid}@with@${currentUserUid}`
+        let exist: boolean = false
+
+        const info = {
+            targetUserUid: user.userUid,
+            targetUserName: user.userName,
+            roomUserlist: [user.userUid, currentUserUid],// 영상챗방 유저리스트 
+            roomUserName: [user.userName, currentUserName], // 영상챗방 유저 이름 
+            roomId: room
+        }
+        dispatch(setSelectedUserInfo(info))
+        props.navigation.push("Call", { roomId: room, roomTitle: user.userName })
+    }
+
 
     const renderUser = (user: FirebaseFirestoreTypes.DocumentData) => {
         return (
@@ -95,10 +100,7 @@ const UserListScreen = (props: { navigation: any }) => {
                 />
                 <Icon
                     name="video"
-                    onPress={() => {
-                        dispatch(setSelectedUser(user))
-                        props.navigation.push("Call")
-                    }}
+                    onPress={() => moveToCallRoom(user)}
                     color="red"
                     style={styles.Btn}
                     size={20}
@@ -107,13 +109,13 @@ const UserListScreen = (props: { navigation: any }) => {
 
         );
     };
-    const acceptChat = () => {
-        dispatch(setChatRequest(false))
-        props.navigation.push("Chat", { name: requestor })
-    }
-    const handleLeave = () => {
-        dispatch(setChatRequest(false))
-    }
+    // const acceptChat = () => {
+    //     dispatch(setChatRequest(false))
+    //     props.navigation.push("Chat", { name: requestor })
+    // }
+    // const handleLeave = () => {
+    //     dispatch(setChatRequest(false))
+    // }
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.title}>현재 접속 중인 유저</Text>

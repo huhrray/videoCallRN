@@ -3,6 +3,7 @@ import {
   CHAT_REQUESTOR,
   CURRENT_USER_AUTH,
   CURRENT_USER_NAME,
+  INCOMING_CALL,
   LANGUAGE,
   OTHER_USER_NAME,
   SELECTED_USER,
@@ -19,7 +20,8 @@ const initialState = {
   request: false,
   requestor: '',
   script: "",
-  language: "ko-KR"
+  language: "ko-KR",
+  incomingCall:false,
 };
 
 export function userReducer(
@@ -45,6 +47,10 @@ export function userReducer(
       return { ...state, script: action.payload };
     case LANGUAGE:
       return { ...state, language: action.payload };
+    case INCOMING_CALL:
+      return { ...state, incomingCall: action.payload };
+      case INCOMING_CALL:
+        return { ...state, incomingCall: action.payload };
     default:
       return state;
   }

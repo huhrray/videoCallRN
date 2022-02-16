@@ -1,26 +1,41 @@
 import { LogBox, ScrollView, StyleSheet, Text, View } from 'react-native';
 import React, { useEffect, useReducer, useState } from 'react';
 import auth from '@react-native-firebase/auth'
-import { Card, Divider, Paragraph } from 'react-native-paper';
+import { Button, Card, Divider, Paragraph } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LogoutButton from '../components/LogoutButton';
 import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch, useSelector } from 'react-redux';
-import { setCurrentUserAuth, setCurrentUsername } from '../store/actions/userAction';
+import { setCurrentUserAuth, setCurrentUsername, setIncomingCall } from '../store/actions/userAction';
 import { RootState } from '../store';
+import Modal from 'react-native-modal'
+import { firestoreDelete } from '../functions/common';
 
-const HomeScreen = (props: { navigation: string[]; }) => {
+const HomeScreen = (props: { navigation: any }) => {
     LogBox.ignoreAllLogs()
-    const { currentUserName } = useSelector((state: RootState) => state.userReducer)
+    const dispatch = useDispatch();
+    const { incomingCall, currentUserName } = useSelector((state: RootState) => state.userReducer);
     // const [name, setName] = useState("")
+    const [callerInfo, setCallerInfo] = useState({ roomId: '', callerName: '', callerUid: "" })
     const user = auth().currentUser
-    const dispatch = useDispatch()
     if (user === null) {
         props.navigation.push("Login")
     }
     useEffect(() => {
+        const callListener = firestore().collection('incoming').onSnapshot(snapshot =>
+            snapshot.docChanges().forEach(change => {
+                if (change.type === 'added') {
+                    const data = change.doc.data()
+                    if (data.calleeUid === user?.uid) {
+                        setCallerInfo({ roomId: data.roomId, callerName: data.callerName, callerUid: data.callerUid })
+                        dispatch(setIncomingCall(true))
+                    }
+                }
+            })
+        )
         return () => {
+            callListener()
         }
     }, [])
 
@@ -43,6 +58,16 @@ const HomeScreen = (props: { navigation: string[]; }) => {
             })
         }
     }, [currentUserName])
+
+    const acceptCall = () => {
+        dispatch(setIncomingCall(false))
+        props.navigation.push('Call', { roomId: callerInfo.roomId, roomTitle: callerInfo.callerName })
+    }
+
+    const handleLeave = () => {
+        firestoreDelete(callerInfo.roomId)
+        dispatch(setIncomingCall(false))
+    }
 
     return (
         <ScrollView style={styles.root}>
@@ -114,6 +139,23 @@ const HomeScreen = (props: { navigation: string[]; }) => {
                 </View>
             </View>
             <LogoutButton />
+            <Modal isVisible={incomingCall} onDismiss={() => dispatch(setIncomingCall(false))} >
+                <View
+                    style={{
+                        backgroundColor: 'white',
+                        padding: 22,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        borderRadius: 4,
+                        borderColor: 'rgba(0, 0, 0, 0.1)',
+                    }}>
+                    <Text>{`${callerInfo.callerName}이 영상통화를 요청하셨습니다`}?</Text>
+                    <Button onPress={acceptCall}>수락</Button>
+                    <Button testID="Reject Call" onPress={handleLeave}>
+                        거절
+                    </Button>
+                </View>
+            </Modal>
 
         </ScrollView>
     );

@@ -12,7 +12,8 @@ interface Props {
 
 export default function ChatRoom(props: Props) {
     return (
-        <ChatScreen selectedUser={props.selectedUser} currentUser={props.currentUser} />
+        // <ChatScreen selectedUser={props.selectedUser} currentUser={props.currentUser} />
+        <></>
     );
 }
 const styles = StyleSheet.create({
