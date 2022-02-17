@@ -42,7 +42,6 @@ export default function CallScreen(props: { navigation: any; route: any }) {
     const [localStream, setLocalStream] = useState<MediaStream | null>();
     const [remoteStream, setRemoteStream] = useState<MediaStream | null>();
     const [gettingCall, setGettingCall] = useState(false);
-    const [message, setMessage] = useState([])
     const pc = useRef<RTCPeerConnection>();
     const connecting = useRef(false);
     const dispatch = useDispatch();
@@ -241,7 +240,8 @@ export default function CallScreen(props: { navigation: any; route: any }) {
                 hangup={hangup}
                 localStream={localStream}
                 remoteStream={remoteStream}
-                message={message}
+                roomId={roomId}
+                roomTitle={roomTitle}
             />
         );
     }

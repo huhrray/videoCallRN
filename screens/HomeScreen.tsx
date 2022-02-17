@@ -45,7 +45,6 @@ const HomeScreen = (props: { navigation: any }) => {
             // setName(doc.data()?.name)
             dispatch(setCurrentUsername(doc.data()?.name))
         })
-
         dispatch(setCurrentUserAuth(user?.uid))
     }, [user])
 
@@ -156,7 +155,6 @@ const HomeScreen = (props: { navigation: any }) => {
                     </Button>
                 </View>
             </Modal>
-
         </ScrollView>
     );
 };

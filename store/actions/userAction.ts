@@ -1,5 +1,5 @@
 import { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
-import { CHAT_REQUEST, CHAT_REQUESTOR, CURRENT_USER_AUTH, CURRENT_USER_NAME, INCOMING_CALL, LANGUAGE, OTHER_USER_NAME, SELECTED_USER, SELECTED_USER_INFO, VOICE_SCRIPT } from "./types";
+import { CHAT_REQUEST, CHAT_REQUESTOR, CURRENT_USER_AUTH, CURRENT_USER_NAME, INCOMING_CALL, IS_CHAT, IS_RECORD, LANGUAGE, OTHER_USER_NAME, SELECTED_USER, SELECTED_USER_INFO, VOICE_SCRIPT } from "./types";
 
 export const setCurrentUsername = (name: string) => (dispatch: (arg0: { type: string; payload: any; }) => void) => {
     dispatch({
@@ -31,12 +31,14 @@ export const setCurrentUsername = (name: string) => (dispatch: (arg0: { type: st
       payload: user,
     });
   };
+
   export const setChatRequest = (request: boolean) =>  (dispatch: (arg0: { type: string; payload: any; }) => void) => {
     dispatch({
       type: CHAT_REQUEST,
       payload: request,
     });
   };
+
   export const setChatRequestor = (requestor: string) =>  (dispatch: (arg0: { type: string; payload: any; }) => void) => {
     dispatch({
       type: CHAT_REQUESTOR,
@@ -64,3 +66,17 @@ export const setCurrentUsername = (name: string) => (dispatch: (arg0: { type: st
       payload: isCalling,
     });
   }
+
+ export const setIsRecord = (isRecord: boolean) =>  (dispatch: (arg0: { type: string; payload: any; }) => void) => {
+    dispatch({
+      type: IS_RECORD,
+      payload: isRecord,
+    });
+  };
+
+  export const setIsChat = (isChat: boolean) =>  (dispatch: (arg0: { type: string; payload: any; }) => void) => {
+    dispatch({
+      type: IS_CHAT,
+      payload: isChat
+    });
+  };

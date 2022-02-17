@@ -8,7 +8,8 @@ interface Props {
     localStream?: MediaStream | null;
     remoteStream?: MediaStream | null;
     style?: boolean;
-    message?: any[]
+    roomId?: string;
+    roomTitle?: string
 }
 function ButtonContainer(props: Props) {
     return (
@@ -18,6 +19,7 @@ function ButtonContainer(props: Props) {
     );
 }
 export default function Video(props: Props) {
+
     // before the connection starts 
     if (props.localStream && !props.remoteStream) {
         return (
@@ -40,15 +42,16 @@ export default function Video(props: Props) {
                     objectFit={"cover"}
                     style={styles.video}
                 />
-                <RTCView
-                    streamURL={props.localStream.toURL()}
-                    objectFit={"cover"}
-                    style={styles.videoLocal}
-                />
+
                 <ButtonContainer hangup={props.hangup} />
-                {/* <View style={styles.cContainer}>
-                    {ChatContainer(props.message)}
-                </View> */}
+                <View style={styles.cContainer}>
+                    {ChatContainer(props.roomId, props.roomTitle)}
+                    <RTCView
+                        streamURL={props.localStream.toURL()}
+                        objectFit={"cover"}
+                        style={styles.videoLocal}
+                    />
+                </View>
             </View>
         );
     }
@@ -58,6 +61,7 @@ const styles = StyleSheet.create({
     bContainer: {
         flexDirection: "row",
         bottom: 30,
+        zIndex: 1
     },
     container: {
         flex: 1,
@@ -71,11 +75,12 @@ const styles = StyleSheet.create({
     },
     videoLocal: {
         position: "absolute",
-        width: 100,
-        height: 150,
-        top: 10,
+        width: 120,
+        height: 170,
+        bottom: 70,
         right: 20,
-        elevation: 10
+        zIndex: 1,
+        elevation: 10,
     },
     cContainer: {
         position: "absolute",

@@ -9,11 +9,13 @@ import {
   SELECTED_USER,
   SELECTED_USER_INFO,
   VOICE_SCRIPT,
+  IS_RECORD,
+  IS_CHAT
 } from '../actions/types';
 
 const initialState = {
   currentUserName: '',
-  currentUserUid:null,
+  currentUserUid: null,
   otherUserName: '',
   selectedUser: null,
   selectedUserInfo: null,
@@ -21,7 +23,9 @@ const initialState = {
   requestor: '',
   script: "",
   language: "ko-KR",
-  incomingCall:false,
+  incomingCall: false,
+  isRecord: false,
+  isChat:false
 };
 
 export function userReducer(
@@ -49,8 +53,10 @@ export function userReducer(
       return { ...state, language: action.payload };
     case INCOMING_CALL:
       return { ...state, incomingCall: action.payload };
-      case INCOMING_CALL:
-        return { ...state, incomingCall: action.payload };
+    case IS_RECORD:
+      return { ...state, isRecord: action.payload };
+    case IS_CHAT:
+      return { ...state, isChat: action.payload };
     default:
       return state;
   }

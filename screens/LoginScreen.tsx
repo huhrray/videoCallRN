@@ -1,14 +1,9 @@
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Button, Snackbar, TextInput } from 'react-native-paper';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import firestore from '@react-native-firebase/firestore';
 import auth from "@react-native-firebase/auth"
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store';
-import { setCurrentUserAuth } from '../store/actions/userAction';
 
 export default function LoginScreen(props: { navigation: string[]; }) {
     const [userId, setUserId] = useState("")

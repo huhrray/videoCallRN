@@ -72,9 +72,7 @@ const UserListScreen = (props: { navigation: any }) => {
     }
 
     const moveToCallRoom = (user: FirebaseFirestoreTypes.DocumentData) => {
-        let room: string = `@call@${user.userUid}@with@${currentUserUid}`
-        let exist: boolean = false
-
+        let room: string = `@make@${user.userUid}@with@${currentUserUid}`
         const info = {
             targetUserUid: user.userUid,
             targetUserName: user.userName,

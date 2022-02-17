@@ -1,4 +1,4 @@
-import { FlatList, KeyboardAvoidingView, LogBox, Platform, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, KeyboardAvoidingView, LogBox, PermissionsAndroid, Platform, StyleSheet, Text, View } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import { useDispatch, useSelector } from 'react-redux';
@@ -7,25 +7,30 @@ import { changeTimeFormat } from '../functions/common';
 import Voice from '@react-native-voice/voice';
 import SystemSetting from 'react-native-system-setting';
 import { setVoiceScript } from '../store/actions/userAction';
-import { TextInput } from 'react-native-paper';
+import { Button, Dialog, Menu, Modal, Provider, TextInput } from 'react-native-paper';
 import 'react-native-get-random-values'
 import { v4 as uuidv4 } from 'uuid';
+import { Asset, CameraOptions, ImageLibraryOptions, launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { camOptions, libOptions } from '../functions/values';
 
 export default function ChatScreen(props: { navigation: any; route: any }) {
     //To ignore keyboardDidHide evnerListener deprecation warning at firestore
     LogBox.ignoreAllLogs();
     const dispatch = useDispatch();
-    const { currentUserName, currentUserUid, selectedUserInfo, script, language } = useSelector((state: RootState) => state.userReducer);
+    const { currentUserName, currentUserUid, script, language } = useSelector((state: RootState) => state.userReducer);
     const { roomId, roomTitle } = props.route.params;
-    // const [userInfo, setUserInfo] = useState({
-    //     _id: currentUserUid,
-    //     avatar: require('../img/patient_no_img.png'),
-    // });
+    // chatting elements
     const [textInput, setTextInput] = useState('');
     const [message, setMessage] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
+    const [img, setImg] = useState<string | undefined>('');
+
+    //voice recognized Text
     const [text, setText] = useState<string>('');
     const [isRecord, setIsRecord] = useState<boolean>(false);
     const flatListRef = useRef<FlatList<any>>(null);
+
+    //open a small tab on plus icon
+    const [tab, setTab] = useState(false)
     useEffect(() => {
         //voice recognition 
         Voice.onSpeechStart = _onSpeechStart;
@@ -65,17 +70,27 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         //녹음시작 종료시마다 시스템 알림음 발생, disable 불가 임시방편으로 볼륨 0으로 조정
         isRecord && SystemSetting.setVolume(0, { type: 'alarm' });
     }, [isRecord]);
+
     useEffect(() => {
         dispatch(setVoiceScript(script + text));
     }, [text]);
 
-    function sendMsg(message: string, type: string) {
+
+    function sendMsg(message: string | undefined, type: string) {
         // send msg to roomId collection in Firestore
+        let msgType
+        if (type === 'voice') {
+            msgType = 'voice'
+        } else if (type === 'image') {
+            msgType = 'image'
+        } else {
+            msgType = 'text'
+        }
         let msg = {
             _id: uuidv4(),
             text: message,
             createdAt: new Date(),
-            type: type === 'voice' ? 'voice' : 'text',
+            type: msgType,
             user: {
                 _id: currentUserUid,
                 name: currentUserName,
@@ -85,6 +100,43 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         setTextInput("")
         firestore().collection('chat').doc(roomId).collection('message').doc(changeTimeFormat()).set(msg);
 
+    }
+
+    const selectPhoto = async () => {
+        await launchImageLibrary(libOptions, res => {
+            if (res.assets) {
+                sendMsg(res.assets[0].uri, 'image')
+                setTab(false)
+            }
+        });
+    }
+    const takePhoto = async () => {
+        try {
+            const isGranted = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.CAMERA);
+            if (isGranted) {
+                launchCamera(camOptions, res => {
+                    if (res.assets) {
+                        sendMsg(res.assets[0].uri, 'image')
+                        setTab(false)
+                    }
+                })
+            } else {
+                const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
+
+                if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                    console.log("Camera permission given");
+                    launchCamera(camOptions, res => {
+                        if (res.assets) {
+                            sendMsg(res.assets[0].uri, 'image')
+                            setTab(false)
+                        }
+                    });
+                }
+            }
+
+        } catch (err) {
+            console.warn(err);
+        }
     }
 
 
@@ -142,59 +194,81 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         }
     }
     const renderMessage = (msg: any) => {
-        return (
-            <View style={colorStyle(msg.item)}>
-                <Text style={styles.bubbleText}>{msg.item.text}</Text>
-            </View>
-        )
+
+        if (msg.item.type === 'image') {
+            return (
+                <View style={styles.bubbleImg}>
+                    <Image style={{ width: 100, height: 100 }} source={{ uri: msg.item.text }} />
+                </View>)
+        } else {
+            return (
+                <View style={colorStyle(msg.item)}>
+                    <Text style={styles.bubbleText}>{msg.item.text}</Text>
+                </View>
+            )
+        }
+
     };
 
 
     return (
-        <View style={styles.chatContainer}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
-                style={{ flex: 1 }}>
-                <View style={styles.chatLogContainer}>
-                    <FlatList
-                        ref={flatListRef}
-                        data={message}
-                        onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
-                        renderItem={msg => renderMessage(msg)}
-                        keyExtractor={(item, index) => index.toString()}
-                    />
-                </View>
-                <KeyboardAvoidingView style={{ marginHorizontal: 10 }}>
-                    <TextInput
-                        mode="outlined"
-                        outlineColor="#2247f1"
-                        activeOutlineColor='#2247f1'
-                        style={styles.inputBox}
-                        value={textInput}
-                        onChangeText={text => setTextInput(text)}
-                        theme={{ roundness: 30 }}
-                        left={
-                            <TextInput.Icon
-                                name="microphone"
-                                color={isRecord ? '#2247f1' : 'grey'}
-                                size={30}
-                                onPress={handleRecord}
-                            />
-                        }
-                        right={
-                            textInput.length > 0 &&
-                            < TextInput.Icon
-                                name="arrow-up-circle"
-                                color="red"
-                                size={30}
-                                onPress={() => sendMsg(textInput, 'text')}
-                            />
-                        }
-                    />
+        <Provider>
+            <View style={styles.chatContainer}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    style={{ flex: 1 }}>
+                    <View style={styles.chatLogContainer}>
+                        <FlatList
+                            ref={flatListRef}
+                            data={message}
+                            onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+                            renderItem={msg => renderMessage(msg)}
+                            keyExtractor={(item, index) => index.toString()}
+                        />
+                    </View>
+                    <View style={{ marginHorizontal: 10 }}>
+                        <TextInput
+                            mode="outlined"
+                            outlineColor="#2247f1"
+                            activeOutlineColor='#2247f1'
+                            style={styles.inputBox}
+                            value={textInput}
+                            onChangeText={text => setTextInput(text)}
+                            theme={{ roundness: 30 }}
+                            left={
+                                <TextInput.Icon
+                                    name="microphone"
+                                    color={isRecord ? '#2247f1' : 'grey'}
+                                    size={30}
+                                    onPress={handleRecord}
+                                />
+                            }
+                            right={
+                                textInput.length > 0 ?
+                                    < TextInput.Icon
+                                        name="arrow-up-circle"
+                                        color="red"
+                                        size={30}
+                                        onPress={() => sendMsg(textInput, 'text')}
+                                    /> : < TextInput.Icon
+                                        name="plus"
+                                        color="#2247f1"
+                                        size={30}
+                                        onPress={() => setTab(true)}
+                                    />
+                            }
+                        />
+                    </View>
+                    <Modal
+                        visible={tab}
+                        onDismiss={() => setTab(false)}
+                        contentContainerStyle={styles.modal}>
+                        <Button onPress={() => selectPhoto()}>앨범에서 고르기</Button>
+                        <Button onPress={() => takePhoto()}>사진 찍기</Button>
+                    </Modal>
                 </KeyboardAvoidingView>
-            </KeyboardAvoidingView>
-
-        </View>
+            </View>
+        </Provider>
     );
 }
 
@@ -205,6 +279,9 @@ const styles = StyleSheet.create({
         // height: "100%",
         // alignContent: 'center',
     },
+    modal: {
+        backgroundColor: '#fff'
+    },
     chatLogContainer: {
         width: "100%",
         height: '87%',
@@ -213,6 +290,15 @@ const styles = StyleSheet.create({
         width: "100%",
         height: 50,
         paddingTop: 5
+    },
+    bubbleImg: {
+        alignSelf: 'flex-end',
+        paddingVertical: 7,
+        paddingHorizontal: 10,
+        marginVertical: 5,
+        marginRight: 15,
+        backgroundColor: "#C6DCF5",
+        borderRadius: 10,
     },
     myBubble: {
         alignSelf: 'flex-end',

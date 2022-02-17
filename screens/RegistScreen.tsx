@@ -3,10 +3,10 @@ import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Avatar, Button, TextInput } from 'react-native-paper';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import { Asset, CameraOptions, ImageLibraryOptions, ImagePickerResponse, launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { PermissionsAndroid } from 'react-native';
-import { windowHeight, windowWidth } from '../functions/style';
+import { camOptions, libOptions, windowHeight, windowWidth } from '../functions/values';
 
 export default function RegisterScreen(props: { navigation: string[] }) {
     const [name, setName] = useState('');
@@ -14,18 +14,7 @@ export default function RegisterScreen(props: { navigation: string[] }) {
     const [password, setPassword] = useState('');
     const [imgUri, setImgUri] = useState<string | undefined>('')
     const [bigImg, setBigImg] = useState(false)
-    const libOptions: ImageLibraryOptions = {
-        mediaType: 'photo',
-        maxHeight: 500,
-        maxWidth: 500,
-    };
-    const camOptions: CameraOptions = {
-        mediaType: 'photo',
-        maxHeight: 500,
-        maxWidth: 500,
-        cameraType: 'front',
-        saveToPhotos: true
-    };
+
 
     const selectPhoto = async () => {
         await launchImageLibrary(libOptions, res => {
