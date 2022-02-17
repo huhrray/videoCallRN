@@ -1,13 +1,66 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Button, TextInput } from 'react-native-paper';
+import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Avatar, Button, TextInput } from 'react-native-paper';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import { Asset, CameraOptions, ImageLibraryOptions, ImagePickerResponse, launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import Icon from 'react-native-vector-icons/FontAwesome5';
+import { PermissionsAndroid } from 'react-native';
+import { windowHeight, windowWidth } from '../functions/style';
 
 export default function RegisterScreen(props: { navigation: string[] }) {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [imgUri, setImgUri] = useState<string | undefined>('')
+    const [bigImg, setBigImg] = useState(false)
+    const libOptions: ImageLibraryOptions = {
+        mediaType: 'photo',
+        maxHeight: 500,
+        maxWidth: 500,
+    };
+    const camOptions: CameraOptions = {
+        mediaType: 'photo',
+        maxHeight: 500,
+        maxWidth: 500,
+        cameraType: 'front',
+        saveToPhotos: true
+    };
+
+    const selectPhoto = async () => {
+        await launchImageLibrary(libOptions, res => {
+            if (res.assets) {
+                setImgUri(res.assets[0].uri)
+            }
+        });
+    }
+    const takePhoto = async () => {
+        try {
+            const isGranted = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.CAMERA);
+            if (isGranted) {
+                launchCamera(camOptions, res => {
+                    if (res.assets) {
+                        setImgUri(res.assets[0].uri)
+                    }
+                })
+            } else {
+                const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
+
+                if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                    console.log("Camera permission given");
+                    launchCamera(camOptions, res => {
+                        if (res.assets) {
+                            setImgUri(res.assets[0].uri)
+                        }
+                    });
+                }
+            }
+
+        } catch (err) {
+            console.warn(err);
+        }
+    }
+
 
     const handleJoin = async (email: string, password: string) => {
         try {
@@ -15,12 +68,13 @@ export default function RegisterScreen(props: { navigation: string[] }) {
                 .createUserWithEmailAndPassword(email, password)
             if (cred) {
                 firestore().collection('users').doc(cred.user.uid).set({
-                    name: name
+                    name: name,
+                    profile: imgUri
                 })
-                console.log('????', cred);
                 setName('');
                 setEmail('');
                 setPassword('');
+                setImgUri('')
                 //모달 띄우거나 알림으로 완료 알림
                 // props.navigation.push('Home')
             };
@@ -35,9 +89,40 @@ export default function RegisterScreen(props: { navigation: string[] }) {
             console.error(e);
         }
     };
-
+    if (bigImg) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'black' }}>
+                <Image style={{ width: windowWidth * 0.9, height: windowHeight * 0.8 }} source={imgUri === '' ? require('../img/patient_no_img.png') : { uri: imgUri }} />
+                <Icon name='times' size={30} color='red' onPress={() => setBigImg(false)} />
+            </View>
+        )
+    }
     return (
         <View style={styles.container}>
+            <View style={styles.pContainer}>
+                <TouchableOpacity
+                    style={styles.plusIcon}
+                    onPress={() => selectPhoto()}>
+                    <Icon
+                        name="plus"
+                        color="#2247f1"
+                        size={18}
+                    />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => { setBigImg(true) }}>
+                    <Image style={styles.profileImg} source={imgUri === '' ? require('../img/patient_no_img.png') : { uri: imgUri }} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.cameraIcon}
+                    onPress={() => takePhoto()}>
+                    <Icon
+                        name="camera"
+                        color="#2247f1"
+                        size={18}
+                    />
+                </TouchableOpacity>
+            </View>
             <TextInput
                 placeholder="이름을 입력하세요"
                 label="이름"
@@ -88,6 +173,20 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         paddingHorizontal: 30,
     },
+    pContainer: {
+        alignItems: 'center',
+        marginBottom: 10,
+        flexDirection: 'row',
+        justifyContent: 'center'
+    },
+
+    profileImg: {
+        borderColor: "#2247f1",
+        borderWidth: 2,
+        width: 100,
+        height: 100,
+        borderRadius: 50
+    },
     button: {
         marginTop: 10,
     },
@@ -95,4 +194,32 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         marginBottom: 10,
     },
+    plusIcon: {
+        position: 'absolute',
+        top: windowHeight * 0.1,
+        right: windowWidth * 0.3,
+        zIndex: 1,
+        backgroundColor: "#fff",
+        borderColor: '#2247f1',
+        borderWidth: 2,
+        width: 30,
+        height: 30,
+        borderRadius: 50,
+        justifyContent: "center",
+        alignItems: 'center'
+    },
+    cameraIcon: {
+        position: 'absolute',
+        top: windowHeight * 0.1,
+        left: windowWidth * 0.3,
+        backgroundColor: "#fff",
+        borderColor: '#2247f1',
+        borderWidth: 2,
+        width: 30,
+        height: 30,
+        borderRadius: 50,
+        justifyContent: "center",
+        alignItems: 'center'
+    }
+
 });
