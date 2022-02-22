@@ -16,3 +16,6 @@ export const INCOMING_CALL = 'INCOMING_CALL'
 
 export const IS_RECORD = "IS_RECORD"
 export const IS_CHAT ="IS_CHAT"
+
+export const LAST_SEEN ="LAST_SEEN"
+export const NEW_MSG_COUNT ='NEW_MSG_COUNT'

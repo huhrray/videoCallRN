@@ -9,7 +9,7 @@ import { setChatRequest, setSelectedUser, setSelectedUserInfo } from '../store/a
 const UserListScreen = (props: { navigation: any }) => {
     const [userList, setUserList] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
 
-    const { request, currentUserName, requestor, currentUserUid } = useSelector((state: RootState) => state.userReducer)
+    const { currentUserName, currentUserUid, newMsgCount } = useSelector((state: RootState) => state.userReducer)
     const dispatch = useDispatch()
     useEffect(() => {
         //get realtime userlist
@@ -33,13 +33,17 @@ const UserListScreen = (props: { navigation: any }) => {
                 });
             })
 
+
         return () => {
-            userRef();
-            // chatSubscribe()
+            //to update actively 
+            // userRef();
         };
 
     }, []);
 
+    useEffect(() => {
+        console.log(newMsgCount, '뉴메세지 카운트')
+    }, [newMsgCount])
 
     const moveToChatRoom = (user: FirebaseFirestoreTypes.DocumentData) => {
         let room: string
@@ -86,6 +90,7 @@ const UserListScreen = (props: { navigation: any }) => {
 
 
     const renderUser = (user: FirebaseFirestoreTypes.DocumentData) => {
+        console.log(user, '유저')
         return (
             <View style={styles.userBtn}>
                 <Text style={styles.userName}>{user.userName}</Text>

@@ -1,5 +1,5 @@
 import { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
-import { CHAT_REQUEST, CHAT_REQUESTOR, CURRENT_USER_AUTH, CURRENT_USER_NAME, INCOMING_CALL, IS_CHAT, IS_RECORD, LANGUAGE, OTHER_USER_NAME, SELECTED_USER, SELECTED_USER_INFO, VOICE_SCRIPT } from "./types";
+import { CHAT_REQUEST, CHAT_REQUESTOR, CURRENT_USER_AUTH, CURRENT_USER_NAME, INCOMING_CALL, IS_CHAT, IS_RECORD, LANGUAGE, NEW_MSG_COUNT, OTHER_USER_NAME, SELECTED_USER, SELECTED_USER_INFO, VOICE_SCRIPT } from "./types";
 
 export const setCurrentUsername = (name: string) => (dispatch: (arg0: { type: string; payload: any; }) => void) => {
     dispatch({
@@ -78,5 +78,20 @@ export const setCurrentUsername = (name: string) => (dispatch: (arg0: { type: st
     dispatch({
       type: IS_CHAT,
       payload: isChat
+    });
+  };
+  
+  export const setLastSeen = (lastSeen:string) =>  (dispatch: (arg0: { type: string; payload: any; }) => void) => {
+    dispatch({
+      type: IS_CHAT,
+      payload: lastSeen
+    });
+  };
+
+  
+  export const setNewMsgCount = (newMsgArr:{}) =>  (dispatch: (arg0: { type: string; payload: any; }) => void) => {
+    dispatch({
+      type: NEW_MSG_COUNT,
+      payload: newMsgArr
     });
   };

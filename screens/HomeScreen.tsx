@@ -7,16 +7,15 @@ import LogoutButton from '../components/LogoutButton';
 import firestore from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch, useSelector } from 'react-redux';
-import { setCurrentUserAuth, setCurrentUsername, setIncomingCall } from '../store/actions/userAction';
+import { setCurrentUserAuth, setCurrentUsername, setIncomingCall, setNewMsgCount } from '../store/actions/userAction';
 import { RootState } from '../store';
 import Modal from 'react-native-modal'
-import { firestoreDelete } from '../functions/common';
+import { changeTimeFormat, firestoreDelete } from '../functions/common';
 
 const HomeScreen = (props: { navigation: any }) => {
     LogBox.ignoreAllLogs()
     const dispatch = useDispatch();
-    const { incomingCall, currentUserName } = useSelector((state: RootState) => state.userReducer);
-    // const [name, setName] = useState("")
+    const { incomingCall, currentUserName, newMsgCount } = useSelector((state: RootState) => state.userReducer);
     const [callerInfo, setCallerInfo] = useState({ roomId: '', callerName: '', callerUid: "" })
     const user = auth().currentUser
     if (user === null) {
@@ -34,8 +33,41 @@ const HomeScreen = (props: { navigation: any }) => {
                 }
             })
         )
+
+        // let userRooms: string[] = []
+        // listen to new msgs from rooms where the user is in
+        firestore().collection('users').doc(user?.uid).get().then(data => {
+            const userRooms: string[] = data.data()?.room
+
+            if (userRooms !== undefined) {
+                userRooms.forEach(room => {
+                    let count = 0
+                    firestore().collection('chat').doc(room).collection('leftAt').doc(user?.uid).get().then(data => {
+                        if (data.data() !== undefined) {
+                            const lastSeenTime = data.data()?.lastSeen
+                            firestore().collection('chat').doc(room).collection('message').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                                snapshot.docChanges().forEach(change => {
+                                    const msgTime = changeTimeFormat(change.doc.data().createdAt.toDate())
+                                    if (msgTime - lastSeenTime > 0) {
+                                        count++
+                                        // console.log(count, '카운트!!')
+                                        dispatch(setNewMsgCount({ roomId: room, count: count }))
+                                        //알림 기능 추가 해당 roomId와 해당 room 에 들어있는 user 이름 옆에 알림 뱃지 추가 
+                                    } else {
+                                        return
+                                    }
+                                })
+                            })
+                        }
+                    })
+                })
+            }
+        })
+
+        // 유저의 룸 리스트 doc을 돌면서 마지막 시간과 값 비교
         return () => {
             callListener()
+            // msgListener()
         }
     }, [])
 
@@ -103,7 +135,7 @@ const HomeScreen = (props: { navigation: any }) => {
                             <Text>치아미백</Text>
                         </Card.Content>
                     </Card>
-                    <Card style={styles.card} onPress={() => props.navigation.push('Chat2')}>
+                    <Card style={styles.card} onPress={() => props.navigation.push('ChatRoomList')}>
                         <Card.Content style={styles.cardContent} >
                             <Icon name="screw-lag" color="#2247f1" size={35} />
                             <Text>임플란트</Text>

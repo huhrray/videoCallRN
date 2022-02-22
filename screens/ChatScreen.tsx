@@ -3,10 +3,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { changeTimeFormat } from '../functions/common';
+import { changeTimeFormat, checkNewMsgs, leftTimeSubscribe } from '../functions/common';
 import Voice from '@react-native-voice/voice';
 import SystemSetting from 'react-native-system-setting';
-import { setVoiceScript } from '../store/actions/userAction';
+import { setLastSeen, setVoiceScript } from '../store/actions/userAction';
 import { Button, Dialog, Menu, Modal, Provider, TextInput } from 'react-native-paper';
 import 'react-native-get-random-values'
 import { v4 as uuidv4 } from 'uuid';
@@ -17,20 +17,26 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
     //To ignore keyboardDidHide evnerListener deprecation warning at firestore
     LogBox.ignoreAllLogs();
     const dispatch = useDispatch();
-    const { currentUserName, currentUserUid, script, language } = useSelector((state: RootState) => state.userReducer);
+    const { currentUserName, currentUserUid, script, language, lastSeen } = useSelector((state: RootState) => state.userReducer);
     const { roomId, roomTitle } = props.route.params;
     // chatting elements
     const [textInput, setTextInput] = useState('');
     const [message, setMessage] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
     const [img, setImg] = useState<string | undefined>('');
+    //check if roomId is in userInfo
+    const [roomArr, setRoomArr] = useState<string[]>([])
 
     //voice recognized Text
     const [text, setText] = useState<string>('');
     const [isRecord, setIsRecord] = useState<boolean>(false);
     const flatListRef = useRef<FlatList<any>>(null);
 
+    //User left at 
+    // const leftAt = leftTimeSubscribe()
+
     //open a small tab on plus icon
     const [tab, setTab] = useState(false)
+
     useEffect(() => {
         //voice recognition 
         Voice.onSpeechStart = _onSpeechStart;
@@ -54,9 +60,46 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
                 });
             });
 
+        //Add current roomId to user's chat room list if it's no already in 
+        firestore().collection('users').doc(currentUserUid).get().then((doc) => {
+            const roomArr: string[] = doc.data()?.room
+            if (roomArr === undefined) {
+                firestore().collection('users').doc(currentUserUid).update({ room: [roomId] })
+            } else {
+                if (roomArr.length > 0) {
+                    if (roomArr.indexOf(roomId) < 0) {
+                        let newArr = [...roomArr, roomId]
+                        firestore().collection('users').doc(currentUserUid).update({ room: newArr })
+                    }
+                } else {
+                    firestore().collection('users').doc(currentUserUid).update({ room: [roomId] })
+                }
+            }
+
+        })
+
+
+        firestore().collection('chat').doc(roomId).collection('leftAt').doc(currentUserUid).get().then(data => {
+            let count = 0
+            const lastActive = parseInt(data.data()?.lastSeen)
+            firestore().collection('chat').doc(roomId).collection('message').orderBy('createdAt', 'desc').get().then(docs => {
+                docs.forEach(doc => {
+                    const latestMsg = parseInt(changeTimeFormat(doc.data().createdAt.toDate()))
+                    if (latestMsg - lastActive > 0) {
+                        count++
+                    } else {
+                        return
+                    }
+                })
+                // count > 0 && sendMsg(`${count}개의 새로운 메세지가 있습니다.`, 'system')
+                //마지막으로 읽은 위치 찾아가기 
+            })
+
+        })
         return () => {
             subscribe();
             Voice.destroy().then(Voice.removeAllListeners);
+            setLeftTime()
         };
     }, []);
 
@@ -76,6 +119,17 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
     }, [text]);
 
 
+    //set when the user left the chat room 
+    function setLeftTime() {
+        firestore().collection('chat').doc(roomId).collection('leftAt').doc(currentUserUid).get().then((doc) => {
+            if (doc.data()) {
+                firestore().collection('chat').doc(roomId).collection('leftAt').doc(currentUserUid).set({ lastSeen: changeTimeFormat() })
+            } else {
+                firestore().collection('chat').doc(roomId).collection('leftAt').doc(currentUserUid).set({ lastSeen: changeTimeFormat() })
+            }
+        })
+    }
+
     function sendMsg(message: string | undefined, type: string) {
         // send msg to roomId collection in Firestore
         let msgType
@@ -83,6 +137,8 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
             msgType = 'voice'
         } else if (type === 'image') {
             msgType = 'image'
+        } else if (type === "system") {
+            msgType = 'system'
         } else {
             msgType = 'text'
         }
@@ -102,6 +158,7 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
 
     }
 
+    // send photos to the chat 
     const selectPhoto = async () => {
         await launchImageLibrary(libOptions, res => {
             if (res.assets) {
@@ -179,6 +236,9 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
     };
 
     const colorStyle = (item: any) => {
+        if (item.type === 'system') {
+            return [styles.bubbleSystem]
+        }
         if (item.user._id === currentUserUid) {
             if (item.type === 'voice') {
                 return [styles.myBubble, { backgroundColor: '#687494' }]
@@ -194,10 +254,10 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         }
     }
     const renderMessage = (msg: any) => {
-
+        //image src uri should be clouds hosting uri, not local !!!!!!!!!!%%%%%%%%%%%
         if (msg.item.type === 'image') {
             return (
-                <View style={styles.bubbleImg}>
+                <View style={colorStyle(msg.item)}>
                     <Image style={{ width: 100, height: 100 }} source={{ uri: msg.item.text }} />
                 </View>)
         } else {
@@ -291,13 +351,13 @@ const styles = StyleSheet.create({
         height: 50,
         paddingTop: 5
     },
-    bubbleImg: {
-        alignSelf: 'flex-end',
+    bubbleSystem: {
+        alignSelf: 'center',
         paddingVertical: 7,
         paddingHorizontal: 10,
         marginVertical: 5,
         marginRight: 15,
-        backgroundColor: "#C6DCF5",
+        backgroundColor: "#d3d3d3",
         borderRadius: 10,
     },
     myBubble: {

@@ -1,8 +1,8 @@
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 /** * 현재날짜 yyyyMMddHHmmsss형태로 반환 */
-export function changeTimeFormat() {
-    var vDate = new Date();
+export function changeTimeFormat(time?: any) {
+    var vDate = time ? time : new Date();
     var yyyy = vDate.getFullYear().toString();
     var MM = (vDate.getMonth() + 1).toString();
     var dd = vDate.getDate().toString();
@@ -67,3 +67,22 @@ export const firestoreDelete = async (roomId: string) => {
         cRef.delete();
     }
 };
+
+export const checkNewMsgs = (roomId: string) => {
+    let time
+    firestore().collection('chat').doc(roomId).collection('message').orderBy('createdAt', 'desc').limit(1).get().then(doc => {
+        const dataTime: string = changeTimeFormat(doc.docs[0].data().createdAt.toDate())
+        //받아오는 스탈 20220217083656142 형식
+        console.log(dataTime, '새 메세지')
+
+    })
+}
+
+export const leftTimeSubscribe = (roomId: string, userUid: string) => {
+    firestore().collection('chat').doc(roomId).collection('leftAt').doc(userUid).get().then(data => {
+        const lastActive = data.data()?.lastSeen
+        console.log(lastActive, '라스트')
+        //채팅방 나간 시간
+        return lastActive
+    })
+}

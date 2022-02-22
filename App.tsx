@@ -17,6 +17,7 @@ import { useAppState } from '@react-native-community/hooks'
 import Modal from 'react-native-modal';
 import { setIncomingCall } from './store/actions/userAction';
 import { Button } from 'react-native-paper';
+import ChatRoomListScreen from './screens/ChatRoomListScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -87,6 +88,7 @@ export default function App() {
             }}>
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="List" component={UserListScreen} />
+            <Stack.Screen name="ChatRoomList" component={ChatRoomListScreen} />
             <Stack.Screen name="Chat" component={ChatScreen}
               options={({ route }: any) => ({
                 title: route.params.roomTitle

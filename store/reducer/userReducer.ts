@@ -10,7 +10,9 @@ import {
   SELECTED_USER_INFO,
   VOICE_SCRIPT,
   IS_RECORD,
-  IS_CHAT
+  IS_CHAT,
+  LAST_SEEN,
+  NEW_MSG_COUNT
 } from '../actions/types';
 
 const initialState = {
@@ -25,7 +27,9 @@ const initialState = {
   language: "ko-KR",
   incomingCall: false,
   isRecord: false,
-  isChat:false
+  isChat: false,
+  lastSeen: '',
+  newMsgCount:[]
 };
 
 export function userReducer(
@@ -57,6 +61,10 @@ export function userReducer(
       return { ...state, isRecord: action.payload };
     case IS_CHAT:
       return { ...state, isChat: action.payload };
+    case LAST_SEEN:
+      return { ...state, lastSeen: action.payload };
+    case NEW_MSG_COUNT:
+      return { ...state, newMsgCount: action.payload };
     default:
       return state;
   }
