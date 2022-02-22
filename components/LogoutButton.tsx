@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import auth from '@react-native-firebase/auth';
 import { Button, Snackbar } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
+import Icon from 'react-native-vector-icons/FontAwesome5';
 
 const LogoutButton = () => {
     const [loading, setLoading] = useState(false);
@@ -21,15 +22,16 @@ const LogoutButton = () => {
 
     return (
         <View>
-            <Button
+            {/* <Button
                 // mode="contained"
                 onPress={hanldeLogOut}
                 style={styles.btn}
                 contentStyle={styles.btnContent}
-                color="#2247f1"
+                color="#fff"
                 loading={loading}>
                 로그아웃
-            </Button>
+            </Button> */}
+            <Icon name='sign-out-alt' size={25} color="#fff" onPress={hanldeLogOut} />
             <Snackbar
                 visible={visible}
                 onDismiss={() => setVisible(false)}>
@@ -52,8 +54,5 @@ const styles = StyleSheet.create({
         alignItems: 'stretch',
         justifyContent: 'center',
         fontSize: 18,
-        marginBottom: 10,
-        marginHorizontal: 10
-
     },
 });
