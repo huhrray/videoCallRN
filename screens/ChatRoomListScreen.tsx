@@ -1,11 +1,16 @@
 import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import Icon from 'react-native-vector-icons/FontAwesome5';
 import { RootState } from '../store';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedUserInfo } from '../store/actions/userAction';
 import { Badge } from 'react-native-paper';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { NavigationContainer } from '@react-navigation/native';
+import ChatScreen from './ChatScreen';
+
+
+const Stack = createNativeStackNavigator();
 
 const ChatRoomListScreen = (props: { navigation: any }) => {
     const [userList, setUserList] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
@@ -24,14 +29,19 @@ const ChatRoomListScreen = (props: { navigation: any }) => {
                         const regexMake = /@make@/gi
                         const regexWith = /@with@/gi
                         const otherUserUid = item.replace(regexMake, '').replace(regexWith, '').replace(currentUserUid, '').trim()
-                        firestore().collection('chat').doc(item).collection('message').orderBy('createdAt', 'desc').limit(1).get().then(docs => {
-                            const lastText = docs.docs[0].data().text
-                            firestore().collection('users').doc(otherUserUid).get().then(data => {
-                                const otherUserName = data.data()?.name
-                                setUserList(prev => [...prev, { userUid: otherUserUid, userName: otherUserName, roomId: item, lastMsg: lastText }])
+                        firestore().collection('chat').doc(item).collection('message').orderBy('createdAt', 'desc').limit(1).onSnapshot(snapshot => {
+                            console.log(snapshot.docs, '스뱁')
+                            snapshot.docChanges().forEach(change => {
+                                if (change.type === 'added') {
+                                    // console.log('체인지', snapshot.docs[snapshot.docs.length - 1])
+                                    const lastText = change.doc.data().text
+                                    firestore().collection('users').doc(otherUserUid).get().then(data => {
+                                        const otherUserName = data.data()?.name
+                                        setUserList(prev => [...prev, { userUid: otherUserUid, userName: otherUserName, roomId: item, lastMsg: lastText }])
+                                    })
+                                }
                             })
                         })
-
                     });
 
                 }
@@ -78,14 +88,24 @@ const ChatRoomListScreen = (props: { navigation: any }) => {
         );
     };
     return (
-        <SafeAreaView style={styles.container}>
-            <FlatList
-                // style={styles.listItem}
-                data={userList}
-                renderItem={user => renderUser(user.item)}
-                keyExtractor={(item, index) => index.toString()}
-            />
-        </SafeAreaView>
+        <NavigationContainer independent={true}>
+            <Stack.Navigator
+                screenOptions={{
+                    headerShown: false
+                }} >
+                <Stack.Screen name="Rooms" component={() =>
+                    <SafeAreaView style={styles.container}>
+                        <FlatList
+                            // style={styles.listItem}
+                            data={userList}
+                            renderItem={user => renderUser(user.item)}
+                            keyExtractor={(item, index) => index.toString()}
+                        />
+                    </SafeAreaView>} />
+                <Stack.Screen name="Chat" component={ChatScreen} />
+            </Stack.Navigator>
+        </NavigationContainer>
+
     );
 };
 
