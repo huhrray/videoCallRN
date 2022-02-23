@@ -5,7 +5,7 @@ import { Button, Snackbar, TextInput } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import auth from "@react-native-firebase/auth"
 
-export default function LoginScreen(props: { navigation: string[]; }) {
+export default function LoginScreen(props: { navigation: any; }) {
     const [userId, setUserId] = useState("")
     const [userPw, setUserPw] = useState("")
     const [loading, setLoading] = useState(false);
@@ -26,6 +26,7 @@ export default function LoginScreen(props: { navigation: string[]; }) {
         } catch (err) {
             console.log('Error', err);
             setLoading(false);
+            //로그인 에러시 알림 추가!!!!!!!!!!
         }
     };
 
@@ -64,13 +65,21 @@ export default function LoginScreen(props: { navigation: string[]; }) {
                 </Button>
                 <Button
                     mode="contained"
-                    onPress={() => props.navigation.push("Register")}
+                    onPress={() => props.navigation.push("Register", { type: 'patient' })}
                     style={styles.btn}
                     contentStyle={styles.btnContent}
                     color="#2247f1"
                 >
                     회원가입
                 </Button>
+                <View style={{ alignItems: 'center' }}>
+                    <Text
+                        style={{ fontSize: 13 }}
+                        onPress={() => props.navigation.push("Register", { type: 'doctor' })}
+                    >
+                        전문의 회원 가입
+                    </Text>
+                </View>
                 <Snackbar
                     visible={visible}
                     onDismiss={() => setVisible(false)}>

@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 const MainScreen = (props: { navigation: any }) => {
     const dispatch = useDispatch();
-    const { incomingCall, currentUserName } = useSelector((state: RootState) => state.userReducer);
+    const { incomingCall, currentUserName, currentUserUid } = useSelector((state: RootState) => state.userReducer);
     const [callerInfo, setCallerInfo] = useState({ roomId: '', callerName: '', callerUid: "" })
     const user = auth().currentUser
     useEffect(() => {
@@ -43,12 +43,13 @@ const MainScreen = (props: { navigation: any }) => {
                             const lastSeenTime = data.data()?.lastSeen
                             firestore().collection('chat').doc(room).collection('message').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
                                 snapshot.docChanges().forEach(change => {
+                                    const sender = change.doc.data().user._id
                                     const msgTime = changeTimeFormat(change.doc.data().createdAt.toDate())
-                                    if (msgTime - lastSeenTime > 0) {
+                                    if (msgTime - lastSeenTime > 0 && sender !== currentUserUid) {
                                         count++
                                         // console.log(count, '카운트!!')
                                         dispatch(setNewMsgCount({ roomId: room, count: count }))
-                                        //알림 기능 추가 해당 roomId와 해당 room 에 들어있는 user 이름 옆에 알림 뱃지 추가 
+                                        //내 이름으로 보낸 메세지 아닐때 뱃지 띄우고 여러 채팅창있을때 이게 가능한지 확인필요
                                     } else {
                                         return
                                     }
@@ -85,7 +86,7 @@ const MainScreen = (props: { navigation: any }) => {
 
     const acceptCall = () => {
         dispatch(setIncomingCall(false))
-        props.navigation.push('Call', { roomId: callerInfo.roomId, roomTitle: callerInfo.callerName })
+        props.navigation.navigate('Call', { roomId: callerInfo.roomId, roomTitle: callerInfo.callerName })
     }
 
     const handleLeave = () => {

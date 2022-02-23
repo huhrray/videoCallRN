@@ -33,13 +33,13 @@ const UserListScreen = (props: { navigation: any }) => {
                 });
             })
 
-
         return () => {
             //to update actively 
             // userRef();
         };
 
     }, []);
+
 
     const moveToChatRoom = (user: FirebaseFirestoreTypes.DocumentData) => {
         let room: string

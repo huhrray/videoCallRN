@@ -1,20 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { LogBox, StyleSheet } from 'react-native';
 import LoginScreen from './screens/LoginScreen';
-import CallScreen from './screens/CallScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
-import ChatScreen from './screens/ChatScreen';
+import { NavigationContainer } from '@react-navigation/native';
 import RegisterScreen from './screens/RegistScreen';
 import HomeScreen from './screens/HomeScreen';
 import auth from '@react-native-firebase/auth';
-import UserListScreen from './screens/UserListScreen';
-import VoiceSTT from './screens/VoiceSTT';
 import { Provider } from 'react-redux';
 import Store from './store';
 import { useAppState } from '@react-native-community/hooks'
-import ChatRoomListScreen from './screens/ChatRoomListScreen';
 import LogoutButton from './components/LogoutButton';
+import ChatScreen from './screens/ChatScreen';
+import CallScreen from './screens/CallScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -60,19 +57,37 @@ export default function App() {
             },
             headerTitleAlign: 'center',
           }}>
-          <Stack.Screen
-            name="Login"
-            component={LoginScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen name="Register" component={RegisterScreen} />
-          {user !== null && <Stack.Screen name="Home"
-            component={HomeScreen}
-            options={{
-              headerBackButtonMenuEnabled: false,
-              headerBackVisible: false,
-              headerRight: () => <LogoutButton />
-            }} />}
+          {user === null ? (
+            //when user is null 
+            <Stack.Group>
+              <Stack.Screen
+                name="Login"
+                component={LoginScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen name="Register" component={RegisterScreen} />
+            </Stack.Group>
+          ) : (
+            //screens for logged in users
+            <Stack.Group>
+              <Stack.Screen name="Home"
+                component={HomeScreen}
+                options={{
+                  headerBackButtonMenuEnabled: false,
+                  headerBackVisible: false,
+                  headerRight: () => <LogoutButton />
+                }} />
+              <Stack.Screen name="Chat" component={ChatScreen}
+                options={({ route }: any) => ({
+                  title: route.params.roomTitle
+                })} />
+              <Stack.Screen name="Call" component={CallScreen}
+                options={({ route }: any) => ({
+                  title: route.params.roomTitle
+                })} />
+            </Stack.Group>
+
+          )}
         </Stack.Navigator>
       </Provider>
     </NavigationContainer>
@@ -80,5 +95,4 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  icon: {},
 });

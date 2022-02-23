@@ -8,6 +8,7 @@ import UserListScreen from './UserListScreen';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
+import MyPageScreen from './MyPageScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -18,12 +19,6 @@ const HomeScreen = (props: { navigation: any }) => {
     if (user === null) {
         props.navigation.push('Login')
     }
-    useEffect(() => {
-        if (newMsgCount.count > 0) {
-
-        }
-    }, [newMsgCount])
-
 
     return (
         <Tab.Navigator
@@ -40,6 +35,9 @@ const HomeScreen = (props: { navigation: any }) => {
                     } else if (route.name === 'List') {
                         iconName = 'user-md'
                         iconColor = focused ? '#2247f1' : 'grey'
+                    } else if (route.name === 'MyPage') {
+                        iconName = 'user-circle'
+                        iconColor = focused ? '#2247f1' : 'grey'
                     }
 
                     // You can return any component that you like here!
@@ -49,14 +47,20 @@ const HomeScreen = (props: { navigation: any }) => {
                 headerShown: false,
                 tabBarActiveTintColor: '#2247f1',
                 tabBarInactiveTintColor: 'gray',
-                tabBarShowLabel: false,
-
             })}>
-            <Tab.Screen name="Main" component={MainScreen} />
-            <Tab.Screen name="ChatRoomList" component={ChatRoomListScreen} options={{
-                tabBarBadge: newMsgCount.count > 0 ? 'new' : undefined
+            <Tab.Screen name="Main" component={MainScreen} options={{
+                title: '홈'
             }} />
-            <Tab.Screen name="List" component={UserListScreen} />
+            <Tab.Screen name="ChatRoomList" component={ChatRoomListScreen} options={{
+                tabBarBadge: newMsgCount.count > 0 ? `${newMsgCount.count}` : undefined,
+                title: '내 채팅'
+            }} />
+            <Tab.Screen name="List" component={UserListScreen} options={{
+                title: '비대면 진료'
+            }} />
+            <Tab.Screen name="MyPage" component={MyPageScreen} options={{
+                title: '마이 페이지'
+            }} />
         </Tab.Navigator>
     );
 };

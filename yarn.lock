@@ -6633,6 +6633,11 @@ react-native-communications@^2.2.1:
   resolved "https://registry.yarnpkg.com/react-native-communications/-/react-native-communications-2.2.1.tgz#7883b56b20a002eeb790c113f8616ea8692ca795"
   integrity sha1-eIO1ayCgAu63kMET+GFuqGksp5U=
 
+react-native-date-picker@^4.1.5:
+  version "4.1.5"
+  resolved "https://registry.yarnpkg.com/react-native-date-picker/-/react-native-date-picker-4.1.5.tgz#d5f27c869c9d456f36038db4aaab796614983331"
+  integrity sha512-JO342dCAcUpWi8kwaji9zOnidJdHagAHyhblUDUMyUfjZmEq2ZkqNnC00M7pN9Tu+D2YNs7yeAiOupMJxev9aQ==
+
 react-native-easy-grid@^0.2.2:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/react-native-easy-grid/-/react-native-easy-grid-0.2.2.tgz#f0be33620be1ebe2d2295918eb58b0a27e8272ab"
