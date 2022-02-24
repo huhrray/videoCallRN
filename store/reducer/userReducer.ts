@@ -12,12 +12,14 @@ import {
   IS_RECORD,
   IS_CHAT,
   LAST_SEEN,
-  NEW_MSG_COUNT
+  NEW_MSG_COUNT,
+  CURRENT_USER_TYPE
 } from '../actions/types';
 
 const initialState = {
   currentUserName: '',
   currentUserUid: '',
+  currentUserType: '',
   otherUserName: '',
   selectedUser: null,
   selectedUserInfo: null,
@@ -35,12 +37,15 @@ const initialState = {
 export function userReducer(
   state = initialState,
   action: { type: any; payload: any },
+  reset?:false
 ) {
   switch (action.type) {
     case CURRENT_USER_NAME:
       return { ...state, currentUserName: action.payload };
     case CURRENT_USER_AUTH:
       return { ...state, currentUserUid: action.payload };
+    case CURRENT_USER_TYPE:
+      return { ...state, currentUserType: action.payload };
     case OTHER_USER_NAME:
       return { ...state, otherUserName: action.payload };
     case SELECTED_USER:

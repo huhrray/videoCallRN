@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import auth from '@react-native-firebase/auth'
 import { Button, Divider } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
-import { setCurrentUserAuth, setCurrentUsername, setIncomingCall, setNewMsgCount } from '../store/actions/userAction';
+import { setCurrentUserAuth, setCurrentUsername, setCurrentUserType, setIncomingCall, setNewMsgCount } from '../store/actions/userAction';
 import { RootState } from '../store';
 import Modal from 'react-native-modal'
 import { changeTimeFormat, firestoreDelete } from '../functions/common';
@@ -13,10 +13,23 @@ import { useDispatch, useSelector } from 'react-redux';
 
 const MainScreen = (props: { navigation: any }) => {
     const dispatch = useDispatch();
-    const { incomingCall, currentUserName, newMsgCount } = useSelector((state: RootState) => state.userReducer);
+    const { incomingCall, currentUserName, currentUserType } = useSelector((state: RootState) => state.userReducer);
     const [callerInfo, setCallerInfo] = useState({ roomId: '', callerName: '', callerUid: "" })
     const user = auth().currentUser
     useEffect(() => {
+
+        //add current logged in users in firestore to see who is in
+        firestore().collection("users").doc(user?.uid).get().then(doc => {
+            dispatch(setCurrentUsername(doc.data()?.name))
+            dispatch(setCurrentUserAuth(user?.uid))
+            dispatch(setCurrentUserType(doc.data()?.type))
+            firestore().collection('currentUsers').doc(user?.uid).set({
+                userUid: user?.uid,
+                userName: doc.data()?.name,
+                userType: doc.data()?.type,
+                active: true
+            })
+        })
         const callListener = firestore().collection('incoming').onSnapshot(snapshot =>
             snapshot.docChanges().forEach(change => {
                 if (change.type === 'added') {
@@ -37,9 +50,9 @@ const MainScreen = (props: { navigation: any }) => {
             if (userRooms !== undefined) {
                 userRooms.forEach(room => {
                     let count = 0
-                    firestore().collection('chat').doc(room).collection('leftAt').doc(user?.uid).get().then(data => {
-                        if (data.data() !== undefined) {
-                            const lastSeenTime = data.data()?.lastSeen
+                    firestore().collection('chat').doc(room).collection('leftAt').doc(user?.uid).onSnapshot(snapshot => {
+                        if (snapshot.data() !== undefined) {
+                            const lastSeenTime = snapshot.data()?.lastSeen
                             firestore().collection('chat').doc(room).collection('message').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
                                 snapshot.docChanges().forEach(change => {
                                     const sender = change.doc.data().user._id
@@ -57,32 +70,16 @@ const MainScreen = (props: { navigation: any }) => {
                             })
                         }
                     })
+
+
                 })
             }
         })
         return () => {
             callListener()
+
         }
     }, [])
-
-    useEffect(() => {
-        //get username with the user uid from auth 
-        firestore().collection("users").doc(user?.uid).get().then(doc => {
-            // setName(doc.data()?.name)
-            dispatch(setCurrentUsername(doc.data()?.name))
-        })
-        dispatch(setCurrentUserAuth(user?.uid))
-    }, [user])
-
-    useEffect(() => {
-        if (currentUserName !== "") {
-            //add current logged in users in firestore to see who is in
-            firestore().collection('currentUsers').doc(user?.uid).set({
-                userUid: user?.uid,
-                userName: currentUserName
-            })
-        }
-    }, [currentUserName])
 
     const acceptCall = () => {
         dispatch(setIncomingCall(false))
