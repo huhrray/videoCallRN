@@ -4,34 +4,29 @@ import auth from '@react-native-firebase/auth';
 import { Button, Snackbar } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
 
 const LogoutButton = () => {
     const [loading, setLoading] = useState(false);
     const [visible, setVisible] = useState(false);
-
+    const { currentUserUid } = useSelector((state: RootState) => state.userReducer);
     const hanldeLogOut = async () => {
         setLoading(true)
-        await firestore().collection('currentUsers').doc(auth().currentUser?.uid).delete()
-        auth().signOut().then(() => {
-            console.log("user has signed out")
-            setLoading(false)
-            setVisible(true)
+        firestore().collection('currentUsers').doc(currentUserUid).delete().then(() => {
+            auth().signOut().then(() => {
+                console.log("user has signed out")
+                setLoading(false)
+                setVisible(true)
 
+            })
         })
+
     }
 
     return (
         <View>
-            {/* <Button
-                // mode="contained"
-                onPress={hanldeLogOut}
-                style={styles.btn}
-                contentStyle={styles.btnContent}
-                color="#fff"
-                loading={loading}>
-                로그아웃
-            </Button> */}
-            <Icon name='sign-out-alt' size={25} color="#fff" onPress={hanldeLogOut} />
+            <Icon name='sign-out-alt' size={20} color="#fff" onPress={hanldeLogOut} />
             <Snackbar
                 visible={visible}
                 onDismiss={() => setVisible(false)}>
