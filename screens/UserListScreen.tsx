@@ -4,7 +4,7 @@ import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firest
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { RootState } from '../store';
 import { useDispatch, useSelector } from 'react-redux';
-import { setChatRequest, setSelectedUser, setSelectedUserInfo } from '../store/actions/userAction';
+import { setSelectedUserInfo } from '../store/actions/userAction';
 
 const UserListScreen = (props: { navigation: any }) => {
     const [userList, setUserList] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
@@ -20,13 +20,13 @@ const UserListScreen = (props: { navigation: any }) => {
                 const users: FirebaseFirestoreTypes.DocumentData[] = []
                 changes.forEach(change => {
                     if (change.type == 'added') {
-                        if (change.doc.data().userUid !== currentUserUid) {
+                        if (change.doc.data().userUid !== currentUserUid && change.doc.data().userType === 'doctor') {
                             users.push(change.doc.data())
                             setUserList(users)
                         }
                     } else if (change.type == 'removed') {
                         const currentUsers = userList.filter(
-                            item => item !== change.doc.data().userName,
+                            item => item !== change.doc.data().userName
                         );
                         setUserList(currentUsers);
                     }
@@ -35,9 +35,8 @@ const UserListScreen = (props: { navigation: any }) => {
 
         return () => {
             //to update actively 
-            // userRef();
+            userRef();
         };
-
     }, []);
 
 
@@ -116,7 +115,7 @@ const UserListScreen = (props: { navigation: any }) => {
     // }
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.title}>현재 접속 중인 유저</Text>
+            <Text style={styles.title}>현재 통화 가능 한 비대면 진료 전문의</Text>
             <FlatList
                 style={styles.listItme}
                 data={userList}
