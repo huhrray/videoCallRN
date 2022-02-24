@@ -17,7 +17,7 @@ import {
 
 const initialState = {
   currentUserName: '',
-  currentUserUid: null,
+  currentUserUid: '',
   otherUserName: '',
   selectedUser: null,
   selectedUserInfo: null,
@@ -29,7 +29,7 @@ const initialState = {
   isRecord: false,
   isChat: false,
   lastSeen: '',
-  newMsgCount:[]
+  newMsgCount:[{roomId:'', count:0}]
 };
 
 export function userReducer(
@@ -64,7 +64,7 @@ export function userReducer(
     case LAST_SEEN:
       return { ...state, lastSeen: action.payload };
     case NEW_MSG_COUNT:
-      return { ...state, newMsgCount: action.payload };
+      return { ...state, newMsgCount: [...state.newMsgCount,  action.payload] };
     default:
       return state;
   }

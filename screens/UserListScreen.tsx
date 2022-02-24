@@ -65,7 +65,7 @@ const UserListScreen = (props: { navigation: any }) => {
                 roomId: room
             }
             dispatch(setSelectedUserInfo(info))
-            props.navigation.push("Chat", { roomId: room, roomTitle: user.userName })
+            props.navigation.push("Chat", { roomId: room, roomTitle: user.userName, otherUserUid: user.userUid })
         })
 
 

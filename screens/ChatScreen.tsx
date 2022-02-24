@@ -18,7 +18,7 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
     LogBox.ignoreAllLogs();
     const dispatch = useDispatch();
     const { currentUserName, currentUserUid, script, language, lastSeen } = useSelector((state: RootState) => state.userReducer);
-    const { roomId, roomTitle } = props.route.params;
+    const { roomId, roomTitle, otherUserUid } = props.route.params;
     // chatting elements
     const [textInput, setTextInput] = useState('');
     const [message, setMessage] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
@@ -56,10 +56,11 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
                         let data: FirebaseFirestoreTypes.DocumentData = change.doc.data();
                         data.createdAt = data.createdAt.toDate();
                         setMessage(prev => [...prev, data])
+
                     }
                 });
             });
-
+        // is it neccessary?? when room list is updated in sendMsg
         //Add current roomId to user's chat room list if it's no already in 
         firestore().collection('users').doc(currentUserUid).get().then((doc) => {
             const roomArr: string[] = doc.data()?.room
@@ -155,6 +156,23 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         };
         setTextInput("")
         firestore().collection('chat').doc(roomId).collection('message').doc(changeTimeFormat()).set(msg);
+
+        firestore().collection('users').doc(otherUserUid).get().then((doc) => {
+            const roomArr: string[] = doc.data()?.room
+            if (roomArr === undefined) {
+                firestore().collection('users').doc(otherUserUid).update({ room: [roomId] })
+            } else {
+                if (roomArr.length > 0) {
+                    if (roomArr.indexOf(roomId) < 0) {
+                        let newArr = [...roomArr, roomId]
+                        firestore().collection('users').doc(otherUserUid).update({ room: newArr })
+                    }
+                } else {
+                    firestore().collection('users').doc(otherUserUid).update({ room: [roomId] })
+                }
+            }
+
+        })
 
     }
 

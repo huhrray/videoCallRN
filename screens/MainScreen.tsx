@@ -2,7 +2,6 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import auth from '@react-native-firebase/auth'
 import { Button, Divider } from 'react-native-paper';
-import LogoutButton from '../components/LogoutButton';
 import firestore from '@react-native-firebase/firestore';
 import { setCurrentUserAuth, setCurrentUsername, setIncomingCall, setNewMsgCount } from '../store/actions/userAction';
 import { RootState } from '../store';
@@ -14,7 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 const MainScreen = (props: { navigation: any }) => {
     const dispatch = useDispatch();
-    const { incomingCall, currentUserName, currentUserUid } = useSelector((state: RootState) => state.userReducer);
+    const { incomingCall, currentUserName, newMsgCount } = useSelector((state: RootState) => state.userReducer);
     const [callerInfo, setCallerInfo] = useState({ roomId: '', callerName: '', callerUid: "" })
     const user = auth().currentUser
     useEffect(() => {
@@ -45,15 +44,16 @@ const MainScreen = (props: { navigation: any }) => {
                                 snapshot.docChanges().forEach(change => {
                                     const sender = change.doc.data().user._id
                                     const msgTime = changeTimeFormat(change.doc.data().createdAt.toDate())
-                                    if (msgTime - lastSeenTime > 0 && sender !== currentUserUid) {
-                                        count++
-                                        // console.log(count, '카운트!!')
-                                        dispatch(setNewMsgCount({ roomId: room, count: count }))
-                                        //내 이름으로 보낸 메세지 아닐때 뱃지 띄우고 여러 채팅창있을때 이게 가능한지 확인필요
+                                    if (sender !== user?.uid) {
+                                        if (msgTime - lastSeenTime > 0) {
+                                            count++
+                                        }
+
                                     } else {
                                         return
                                     }
                                 })
+                                count > 0 && dispatch(setNewMsgCount({ roomId: room, count: count }))
                             })
                         }
                     })

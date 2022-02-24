@@ -19,6 +19,14 @@ const HomeScreen = (props: { navigation: any }) => {
     if (user === null) {
         props.navigation.push('Login')
     }
+    // sum of all the new messages 
+    const sumNewMsg = () => {
+        let count = 0
+        newMsgCount.forEach((item: { roomId: string, count: number }) => {
+            count = count + item.count
+        });
+        return count
+    }
 
     return (
         <Tab.Navigator
@@ -39,10 +47,7 @@ const HomeScreen = (props: { navigation: any }) => {
                         iconName = 'user-circle'
                         iconColor = focused ? '#2247f1' : 'grey'
                     }
-
-                    // You can return any component that you like here!
                     return <Icon name={iconName} size={size} color={iconColor} />;
-
                 },
                 headerShown: false,
                 tabBarActiveTintColor: '#2247f1',
@@ -52,7 +57,7 @@ const HomeScreen = (props: { navigation: any }) => {
                 title: '홈'
             }} />
             <Tab.Screen name="ChatRoomList" component={ChatRoomListScreen} options={{
-                tabBarBadge: newMsgCount.count > 0 ? `${newMsgCount.count}` : undefined,
+                tabBarBadge: sumNewMsg() > 0 ? `${sumNewMsg()}` : undefined,
                 title: '내 채팅'
             }} />
             <Tab.Screen name="List" component={UserListScreen} options={{
