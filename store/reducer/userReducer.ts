@@ -1,3 +1,4 @@
+import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import {
   CHAT_REQUEST,
   CHAT_REQUESTOR,
@@ -13,10 +14,10 @@ import {
   IS_CHAT,
   LAST_SEEN,
   NEW_MSG_COUNT,
-  CURRENT_USER_TYPE
+  CURRENT_USER_TYPE,
 } from '../actions/types';
 
-const initialState = {
+const initialState: stateType = {
   currentUserName: '',
   currentUserUid: '',
   currentUserType: '',
@@ -31,13 +32,28 @@ const initialState = {
   isRecord: false,
   isChat: false,
   lastSeen: '',
-  newMsgCount:[{roomId:'', count:0}]
+  newMsgCount: [],
 };
-
+export interface stateType {
+  currentUserName: string,
+  currentUserUid: string,
+  currentUserType: string,
+  otherUserName: string,
+  selectedUser: FirebaseFirestoreTypes.DocumentData | null,
+  selectedUserInfo: { targetUserUid: any; targetUserName: any; roomUserlist: any[]; roomUserName: any[]; roomId: string; } | null,
+  request: boolean,
+  requestor: string,
+  script: string,
+  language: string,
+  incomingCall: boolean,
+  isRecord: boolean,
+  isChat: boolean,
+  lastSeen: string,
+  newMsgCount: { roomId: string, count: number }[],
+}
 export function userReducer(
   state = initialState,
-  action: { type: any; payload: any },
-  reset?:false
+  action: { type: any; payload: any }
 ) {
   switch (action.type) {
     case CURRENT_USER_NAME:
@@ -69,8 +85,29 @@ export function userReducer(
     case LAST_SEEN:
       return { ...state, lastSeen: action.payload };
     case NEW_MSG_COUNT:
-      return { ...state, newMsgCount: [...state.newMsgCount,  action.payload] };
+      return { ...state, newMsgCount: filterCounter(state.newMsgCount, action.payload) };
     default:
       return state;
   }
 }
+
+const filterCounter = (state: { roomId: string; count: number; }[], payload: { roomId: string; count: number; }) => {
+  let newCountArr: { roomId: string; count: number; }[] = []
+  if (payload.count === 0) {
+    state.forEach(item => {
+      if (item.roomId === payload.roomId) {
+        console.log(item, '요것 뉴', payload)
+
+        newCountArr = state.filter(counter => {
+          counter.roomId !== payload.roomId
+        })
+        console.log(newCountArr, '뉴 어레')
+      }
+
+    })
+  } else {
+    newCountArr = [...state, payload]
+  }
+  return newCountArr;
+}
+

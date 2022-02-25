@@ -1,5 +1,5 @@
 import { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
-import { CHAT_REQUEST, CHAT_REQUESTOR, CURRENT_USER_AUTH, CURRENT_USER_NAME, CURRENT_USER_TYPE, INCOMING_CALL, IS_CHAT, IS_RECORD, LANGUAGE, NEW_MSG_COUNT, OTHER_USER_NAME, SELECTED_USER, SELECTED_USER_INFO, VOICE_SCRIPT } from "./types";
+import { CHAT_REQUEST, CHAT_REQUESTOR, CURRENT_USER_AUTH, CURRENT_USER_NAME, CURRENT_USER_TYPE, INCOMING_CALL, IS_CHAT, IS_RECORD, LANGUAGE, NEW_MSG_COUNT, OTHER_USER_NAME, SELECTED_USER, SELECTED_USER_INFO,  VOICE_SCRIPT } from "./types";
 
 export const setCurrentUsername = (name: string) => (dispatch: (arg0: { type: string; payload: any; }) => void) => {
     dispatch({
@@ -99,10 +99,11 @@ export const setCurrentUsername = (name: string) => (dispatch: (arg0: { type: st
   };
 
   
-  export const setNewMsgCount = ( newMsgArr:{roomId:string, count:number}) =>  (dispatch: (arg0: { type: string; payload: any; }) => void) => {
+  export const setNewMsgCount = ( newMsg:{roomId:string, count:number}) =>  (dispatch: (arg0: { type: string; payload: any; }) => void) => {
     dispatch({
       type: NEW_MSG_COUNT,
-      payload: newMsgArr
+      payload: newMsg
     });
   };
+
 
