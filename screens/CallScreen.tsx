@@ -3,19 +3,12 @@ import { StyleSheet, View } from 'react-native';
 import Button from '../components/Button';
 import GettingCall from '../components/GettingCall';
 import Video from '../components/Video';
-import {
-    EventOnAddStream,
-    MediaStream,
-    RTCIceCandidate,
-    RTCPeerConnection,
-    RTCSessionDescription,
-} from 'react-native-webrtc';
+import { EventOnAddStream, MediaStream, RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, } from 'react-native-webrtc';
 import Utils from '../components/Utils';
-import firestore, {
-    FirebaseFirestoreTypes,
-} from '@react-native-firebase/firestore';
+import firestore, { FirebaseFirestoreTypes, } from '@react-native-firebase/firestore';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
+import { setUserStatus } from '../store/actions/userAction';
 
 const TURN_SERVER_URL = '192.168.0.2:3478';
 const TURN_SERVER_USERNAME = 'seyhuh';
@@ -45,7 +38,7 @@ export default function CallScreen(props: { navigation: any; route: any }) {
     const pc = useRef<RTCPeerConnection>();
     const connecting = useRef(false);
     const dispatch = useDispatch();
-    const { currentUserName, currentUserUid, selectedUserInfo } = useSelector((state: RootState) => state.userReducer);
+    const { currentUserName, currentUserUid, selectedUserInfo, userStatus } = useSelector((state: RootState) => state.userReducer);
     const { roomId, roomTitle } = props.route.params;
     useEffect(() => {
         const cRef = firestore().collection('call').doc(roomId);
@@ -69,6 +62,9 @@ export default function CallScreen(props: { navigation: any; route: any }) {
             snapshot.docChanges().forEach(change => {
                 if (change.type === 'removed') {
                     hangup();
+                    // ?? here userStatus is not actively changed so ! mark was removed ?? 
+                    dispatch(setUserStatus(userStatus))
+                    firestore().collection('currentUsers').doc(currentUserUid).update({ active: userStatus })
                 }
             });
         });
@@ -83,6 +79,7 @@ export default function CallScreen(props: { navigation: any; route: any }) {
         return () => {
             subscribe();
             subscribeDelete();
+            subscribeDeleteModal();
         };
     }, []);
     const setupWebrtc = async () => {
@@ -103,7 +100,8 @@ export default function CallScreen(props: { navigation: any; route: any }) {
     const create = async () => {
         console.log('calling');
         connecting.current = true;
-
+        dispatch(setUserStatus(!userStatus))
+        firestore().collection('currentUsers').doc(currentUserUid).update({ active: !userStatus })
         firestore().collection('incoming').add({ type: 'call', roomId: roomId, callerName: currentUserName, callerUid: currentUserUid, calleeUid: selectedUserInfo.targetUserUid })
         //setup webrtc
         await setupWebrtc();
@@ -160,6 +158,8 @@ export default function CallScreen(props: { navigation: any; route: any }) {
                 cRef.update(cWithAnwer);
             }
         }
+        dispatch(setUserStatus(!userStatus))
+        firestore().collection('currentUsers').doc(currentUserUid).update({ active: !userStatus })
     };
     // for disconnectiong the call clse the connection, release the stream  and delete the document for the call
 
@@ -171,6 +171,7 @@ export default function CallScreen(props: { navigation: any; route: any }) {
         if (pc.current) {
             pc.current.close();
         }
+
     };
 
     //helper function
@@ -201,6 +202,7 @@ export default function CallScreen(props: { navigation: any; route: any }) {
             })
             cRef.delete();
         }
+
     };
 
     const collectIceCandidates = async (
