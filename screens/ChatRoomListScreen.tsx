@@ -32,7 +32,6 @@ const ChatRoomListScreen = (props: { navigation: any }) => {
                             snapshot.docChanges().forEach(change => {
                                 if (change.type === 'added') {
                                     const lastText = change.doc.data().text
-                                    console.log("왜 여기오냐 ㅠ ")
                                     firestore().collection('users').doc(otherUserUid).get().then(data => {
                                         const otherUserName = data.data()?.name
                                         // when new msg comes remove the exisitng data to replace to a new one
@@ -45,7 +44,6 @@ const ChatRoomListScreen = (props: { navigation: any }) => {
 
                                         // setUserList(prev => [...prev, { userUid: otherUserUid, userName: otherUserName, roomId: item, lastMsg: lastText }])
                                     }).then(() => {
-                                        console.log("좀 기다려봐 ㅠ")
                                         setUserList(firstData)
                                     })
                                 }
@@ -68,8 +66,10 @@ const ChatRoomListScreen = (props: { navigation: any }) => {
             roomUserName: [user.userName, currentUserName], // 챗방 유저 이름 
             roomId: user.roomId
         }
-
-        dispatch(setNewMsgCount({ roomId: user.roomId, count: 0 }))
+        const newCounter = newMsgCount.filter((counter: { roomId: string; count: number }) => {
+            counter.roomId !== user.roomId
+        });
+        dispatch(setNewMsgCount(newCounter))
         dispatch(setSelectedUserInfo(info))
         props.navigation.push("Chat", { roomId: user.roomId, roomTitle: user.userName, otherUserUid: user.userUid })
 

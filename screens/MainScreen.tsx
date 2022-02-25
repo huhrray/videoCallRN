@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import auth from '@react-native-firebase/auth'
 import { Button, Divider } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
-import { setCurrentUserAuth, setCurrentUsername, setCurrentUserType, setIncomingCall, setNewMsgCount } from '../store/actions/userAction';
+import { setCurrentUserAuth, setCurrentUsername, setCurrentUserType, setIncomingCall, setLastSeen, setNewMsgCount } from '../store/actions/userAction';
 import { RootState } from '../store';
 import Modal from 'react-native-modal'
 import { changeTimeFormat, firestoreDelete } from '../functions/common';
@@ -13,7 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 const MainScreen = (props: { navigation: any }) => {
     const dispatch = useDispatch();
-    const { incomingCall, currentUserName, currentUserType } = useSelector((state: RootState) => state.userReducer);
+    const { incomingCall, currentUserName, currentUserType, lastSeen } = useSelector((state: RootState) => state.userReducer);
     const [callerInfo, setCallerInfo] = useState({ roomId: '', callerName: '', callerUid: "" })
     const user = auth().currentUser
     useEffect(() => {
@@ -50,7 +50,9 @@ const MainScreen = (props: { navigation: any }) => {
             if (userRooms !== undefined) {
                 userRooms.forEach(room => {
                     let count = 0
+                    let msgCounter: { roomId: string, count: number }[] = []
                     firestore().collection('chat').doc(room).collection('leftAt').doc(user?.uid).onSnapshot(snapshot => {
+                        // if(snapshot.data())
                         if (snapshot.data() !== undefined) {
                             const lastSeenTime = snapshot.data()?.lastSeen
                             firestore().collection('chat').doc(room).collection('message').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
@@ -61,14 +63,25 @@ const MainScreen = (props: { navigation: any }) => {
                                         if (msgTime - lastSeenTime > 0) {
                                             count++
                                         }
-
-                                    } else {
-                                        return
                                     }
                                 })
-                                count > 0 && dispatch(setNewMsgCount({ roomId: room, count: count }))
+                                msgCounter.forEach(counter => {
+                                    if (room === counter.roomId) {
+                                        if (counter.count < count) {
+                                            msgCounter = msgCounter.filter(counterItem => {
+                                                counterItem.roomId !== room
+                                            })
+                                        }
+                                    }
+
+                                })
+                                if (count > 0) {
+                                    dispatch(setNewMsgCount([...msgCounter, { roomId: room, count: count }]))
+                                    count = 0
+                                }
                             })
                         }
+
                     })
 
 

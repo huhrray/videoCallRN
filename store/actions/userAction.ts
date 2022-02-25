@@ -99,10 +99,10 @@ export const setCurrentUsername = (name: string) => (dispatch: (arg0: { type: st
   };
 
   
-  export const setNewMsgCount = ( newMsg:{roomId:string, count:number}) =>  (dispatch: (arg0: { type: string; payload: any; }) => void) => {
+  export const setNewMsgCount = ( newMsgArr:{roomId:string, count:number}[]) =>  (dispatch: (arg0: { type: string; payload: any; }) => void) => {
     dispatch({
       type: NEW_MSG_COUNT,
-      payload: newMsg
+      payload: newMsgArr
     });
   };
 

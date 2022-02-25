@@ -22,6 +22,7 @@ const HomeScreen = (props: { navigation: any }) => {
     // sum of all the new messages 
     const sumNewMsg = () => {
         let count = 0
+        // console.log(newMsgCount, '뉴메세지')
         newMsgCount.forEach((item: { roomId: string, count: number }) => {
             count = count + item.count
         });

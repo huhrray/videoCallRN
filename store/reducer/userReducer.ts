@@ -85,29 +85,29 @@ export function userReducer(
     case LAST_SEEN:
       return { ...state, lastSeen: action.payload };
     case NEW_MSG_COUNT:
-      return { ...state, newMsgCount: filterCounter(state.newMsgCount, action.payload) };
+      return { ...state, newMsgCount: action.payload};
     default:
       return state;
   }
 }
 
-const filterCounter = (state: { roomId: string; count: number; }[], payload: { roomId: string; count: number; }) => {
-  let newCountArr: { roomId: string; count: number; }[] = []
-  if (payload.count === 0) {
-    state.forEach(item => {
-      if (item.roomId === payload.roomId) {
-        console.log(item, '요것 뉴', payload)
+// const filterCounter = (state: { roomId: string; count: number; }[], payload: { roomId: string; count: number; }) => {
+//   let newCountArr: { roomId: string; count: number; }[] = []
+//   if (payload.count === 0) {
+//     state.forEach(item => {
+//       if (item.roomId === payload.roomId) {
+//         console.log(item, '요것 뉴', payload)
 
-        newCountArr = state.filter(counter => {
-          counter.roomId !== payload.roomId
-        })
-        console.log(newCountArr, '뉴 어레')
-      }
+//         newCountArr = state.filter(counter => {
+//           counter.roomId !== payload.roomId
+//         })
+//         console.log(newCountArr, '뉴 어레')
+//       }
 
-    })
-  } else {
-    newCountArr = [...state, payload]
-  }
-  return newCountArr;
-}
+//     })
+//   } else {
+//     newCountArr = [...state, payload]
+//   }
+//   return newCountArr;
+// }
 

@@ -6,7 +6,7 @@ import { RootState } from '../store';
 import { changeTimeFormat, checkNewMsgs, leftTimeSubscribe } from '../functions/common';
 import Voice from '@react-native-voice/voice';
 import SystemSetting from 'react-native-system-setting';
-import { setLastSeen, setVoiceScript } from '../store/actions/userAction';
+import { setLastSeen, setNewMsgCount, setVoiceScript } from '../store/actions/userAction';
 import { Button, Dialog, Menu, Modal, Provider, TextInput } from 'react-native-paper';
 import 'react-native-get-random-values'
 import { v4 as uuidv4 } from 'uuid';
@@ -17,14 +17,11 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
     //To ignore keyboardDidHide evnerListener deprecation warning at firestore
     LogBox.ignoreAllLogs();
     const dispatch = useDispatch();
-    const { currentUserName, currentUserUid, script, language, lastSeen } = useSelector((state: RootState) => state.userReducer);
-    const { roomId, roomTitle, otherUserUid } = props.route.params;
+    const { currentUserName, currentUserUid, script, language, newMsgCount } = useSelector((state: RootState) => state.userReducer);
+    const { roomId, otherUserUid } = props.route.params;
     // chatting elements
     const [textInput, setTextInput] = useState('');
     const [message, setMessage] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
-    const [img, setImg] = useState<string | undefined>('');
-    //check if roomId is in userInfo
-    const [roomArr, setRoomArr] = useState<string[]>([])
 
     //voice recognized Text
     const [text, setText] = useState<string>('');
@@ -46,20 +43,16 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         Voice.onSpeechError = _onSpeechError;
         setTimeout(() => flatListRef.current?.scrollToEnd(), 300)
         // for real time update
-        const subscribe = firestore()
-            .collection('chat')
-            .doc(roomId)
-            .collection('message')
-            .onSnapshot(snapshot => {
-                snapshot.docChanges().forEach(change => {
-                    if (change.type == 'added') {
-                        let data: FirebaseFirestoreTypes.DocumentData = change.doc.data();
-                        data.createdAt = data.createdAt.toDate();
-                        setMessage(prev => [...prev, data])
+        const subscribe = firestore().collection('chat').doc(roomId).collection('message').onSnapshot(snapshot => {
+            snapshot.docChanges().forEach(change => {
+                if (change.type == 'added') {
+                    let data: FirebaseFirestoreTypes.DocumentData = change.doc.data();
+                    data.createdAt = data.createdAt.toDate();
+                    setMessage(prev => [...prev, data])
 
-                    }
-                });
+                }
             });
+        });
         // is it neccessary?? when room list is updated in sendMsg
         //Add current roomId to user's chat room list if it's no already in 
         firestore().collection('users').doc(currentUserUid).get().then((doc) => {
@@ -79,24 +72,11 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
 
         })
 
+        //마지막으로 읽은 위치 찾아가기 
+        //newMsgCount로 높이 계산해서 위치 찾기??
 
-        firestore().collection('chat').doc(roomId).collection('leftAt').doc(currentUserUid).get().then(data => {
-            let count = 0
-            const lastActive = parseInt(data.data()?.lastSeen)
-            firestore().collection('chat').doc(roomId).collection('message').orderBy('createdAt', 'desc').get().then(docs => {
-                docs.forEach(doc => {
-                    const latestMsg = parseInt(changeTimeFormat(doc.data().createdAt.toDate()))
-                    if (latestMsg - lastActive > 0) {
-                        count++
-                    } else {
-                        return
-                    }
-                })
-                // count > 0 && sendMsg(`${count}개의 새로운 메세지가 있습니다.`, 'system')
-                //마지막으로 읽은 위치 찾아가기 
-            })
+        console.log(newMsgCount, '들어왔어')
 
-        })
         return () => {
             subscribe();
             Voice.destroy().then(Voice.removeAllListeners);
@@ -129,6 +109,11 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
                 firestore().collection('chat').doc(roomId).collection('leftAt').doc(currentUserUid).set({ lastSeen: changeTimeFormat() })
             }
         })
+        const newCounter = newMsgCount.filter((counter: { roomId: string; count: number }) => {
+            counter.roomId !== roomId
+        });
+        dispatch(setNewMsgCount(newCounter))
+
     }
 
     function sendMsg(message: string | undefined, type: string) {
@@ -172,6 +157,11 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
                 }
             }
 
+        })
+        firestore().collection('chat').doc(roomId).collection('leftAt').doc(otherUserUid).get().then(data => {
+            if (!data.exists) {
+                firestore().collection('chat').doc(roomId).collection('leftAt').doc(otherUserUid).set({ lastSeen: 0 })
+            }
         })
 
     }
