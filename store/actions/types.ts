@@ -14,6 +14,7 @@ export const VOICE_SCRIPT ="VOICE_SCRIPT"
 export const LANGUAGE = "LANGUAGE"
 
 export const INCOMING_CALL = 'INCOMING_CALL'
+export const USER_STATUS ='USER_STATUS'
 
 export const IS_RECORD = "IS_RECORD"
 export const IS_CHAT ="IS_CHAT"

@@ -15,6 +15,7 @@ import {
   LAST_SEEN,
   NEW_MSG_COUNT,
   CURRENT_USER_TYPE,
+  USER_STATUS,
 } from '../actions/types';
 
 const initialState: stateType = {
@@ -29,6 +30,7 @@ const initialState: stateType = {
   script: "",
   language: "ko-KR",
   incomingCall: false,
+  userStatus: true,
   isRecord: false,
   isChat: false,
   lastSeen: '',
@@ -46,6 +48,7 @@ export interface stateType {
   script: string,
   language: string,
   incomingCall: boolean,
+  userStatus: boolean,
   isRecord: boolean,
   isChat: boolean,
   lastSeen: string,
@@ -78,6 +81,8 @@ export function userReducer(
       return { ...state, language: action.payload };
     case INCOMING_CALL:
       return { ...state, incomingCall: action.payload };
+    case USER_STATUS:
+      return { ...state, userStatus: action.payload };
     case IS_RECORD:
       return { ...state, isRecord: action.payload };
     case IS_CHAT:
@@ -85,7 +90,7 @@ export function userReducer(
     case LAST_SEEN:
       return { ...state, lastSeen: action.payload };
     case NEW_MSG_COUNT:
-      return { ...state, newMsgCount: action.payload};
+      return { ...state, newMsgCount: action.payload };
     default:
       return state;
   }

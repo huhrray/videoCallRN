@@ -5,11 +5,12 @@ import { RootState } from '../store';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import { Switch } from 'react-native-paper';
 import { windowHeight, windowWidth } from '../functions/values';
+import { setUserStatus } from '../store/actions/userAction';
 
 const MyPageScreen = () => {
-    // const dispatch = useDispatch();
+    const dispatch = useDispatch();
     const [status, setStatus] = useState(false)
-    const { currentUserName, currentUserType, currentUserUid } = useSelector((state: RootState) => state.userReducer);
+    const { currentUserName, currentUserType, currentUserUid, userStatus } = useSelector((state: RootState) => state.userReducer);
     useEffect(() => {
         firestore().collection("currentUsers").doc(currentUserUid).get().then(doc => {
             doc.data()?.active && setStatus(true)
@@ -19,8 +20,9 @@ const MyPageScreen = () => {
     }, [])
 
     const handleStatusSwitch = () => {
-        setStatus(!status)
-        firestore().collection('currentUsers').doc(currentUserUid).update({ active: !status })
+        // setStatus(!status)
+        dispatch(setUserStatus(!userStatus))
+        firestore().collection('currentUsers').doc(currentUserUid).update({ active: !userStatus })
     }
 
     return (
@@ -31,7 +33,7 @@ const MyPageScreen = () => {
                 <Text style={styles.textBoxHeader}>비대면 진료 설정</Text>
                 <View style={{ flexDirection: 'row' }}>
                     <Text style={styles.textBoxText} >Off</Text>
-                    <Switch value={status} onValueChange={() => handleStatusSwitch()} color="#2747f1" />
+                    <Switch value={userStatus} onValueChange={() => handleStatusSwitch()} color="#2747f1" />
                     <Text style={styles.textBoxText}>On</Text>
                 </View>
             </View>

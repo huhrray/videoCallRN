@@ -90,7 +90,6 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
     }, [Voice]);
 
     useEffect(() => {
-        // isRecord ? setLabel("받아쓰기 중....") : setLabel("마이크가 꺼져있습니다.")
         //녹음시작 종료시마다 시스템 알림음 발생, disable 불가 임시방편으로 볼륨 0으로 조정
         isRecord && SystemSetting.setVolume(0, { type: 'alarm' });
     }, [isRecord]);
