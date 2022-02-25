@@ -29,6 +29,16 @@ const UserListScreen = (props: { navigation: any }) => {
                             item => item !== change.doc.data().userName
                         );
                         setUserList(currentUsers);
+                    } else if (change.type == 'modified') {
+                        // listen to user active status
+                        if (change.doc.data().active) {
+                            users.push(change.doc.data())
+                            setUserList(users)
+                        } else {
+                            setUserList(users.filter(user => {
+                                user.userUid !== change.doc.data().userUid
+                            }))
+                        }
                     }
                 });
             })
@@ -106,13 +116,7 @@ const UserListScreen = (props: { navigation: any }) => {
 
         );
     };
-    // const acceptChat = () => {
-    //     dispatch(setChatRequest(false))
-    //     props.navigation.push("Chat", { name: requestor })
-    // }
-    // const handleLeave = () => {
-    //     dispatch(setChatRequest(false))
-    // }
+
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.title}>현재 통화 가능 한 비대면 진료 전문의</Text>
@@ -122,23 +126,7 @@ const UserListScreen = (props: { navigation: any }) => {
                 renderItem={user => renderUser(user.item)}
                 keyExtractor={(item, index) => index.toString()}
             />
-            {/* <Modal isVisible={request && currentUserName !== requestor} onDismiss={() => dispatch(setChatRequest(false))} >
-                <View
-                    style={{
-                        backgroundColor: 'white',
-                        padding: 22,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        borderRadius: 4,
-                        borderColor: 'rgba(0, 0, 0, 0.1)',
-                    }}>
-                    <Text>{requestor}이 메세지를 보냈습니다. 채팅창으로 이동하시겠습니까?</Text>
-                    <Button onPress={acceptChat}>수락</Button>
-                    <Button testID="Reject Call" onPress={handleLeave}>
-                        거절
-                    </Button>
-                </View>
-            </Modal> */}
+
         </SafeAreaView>
     );
 };
