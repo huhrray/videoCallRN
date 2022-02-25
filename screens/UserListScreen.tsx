@@ -9,7 +9,7 @@ import { setSelectedUserInfo } from '../store/actions/userAction';
 const UserListScreen = (props: { navigation: any }) => {
     const [userList, setUserList] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
 
-    const { currentUserName, currentUserUid, newMsgCount } = useSelector((state: RootState) => state.userReducer)
+    const { currentUserName, currentUserUid, currentUserType } = useSelector((state: RootState) => state.userReducer)
     const dispatch = useDispatch()
     useEffect(() => {
         //get realtime userlist
@@ -20,10 +20,18 @@ const UserListScreen = (props: { navigation: any }) => {
                 const users: FirebaseFirestoreTypes.DocumentData[] = []
                 changes.forEach(change => {
                     if (change.type == 'added') {
-                        if (change.doc.data().userUid !== currentUserUid && change.doc.data().userType === 'doctor') {
-                            users.push(change.doc.data())
-                            setUserList(users)
+                        if (currentUserType === 'doctor') {
+                            if (change.doc.data().userUid !== currentUserUid && change.doc.data().userType === 'patient') {
+                                users.push(change.doc.data())
+                                setUserList(users)
+                            }
+                        } else {
+                            if (change.doc.data().userUid !== currentUserUid && change.doc.data().userType === 'doctor') {
+                                users.push(change.doc.data())
+                                setUserList(users)
+                            }
                         }
+
                     } else if (change.type == 'removed') {
                         const currentUsers = userList.filter(
                             item => item !== change.doc.data().userName
@@ -119,7 +127,7 @@ const UserListScreen = (props: { navigation: any }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.title}>현재 통화 가능 한 비대면 진료 전문의</Text>
+            <Text style={styles.title}>{currentUserType === 'doctor' ? '진료 대기 중인 환자' : '현재 통화 가능 한 비대면 진료 전문의'}</Text>
             <FlatList
                 style={styles.listItme}
                 data={userList}
