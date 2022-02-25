@@ -10,6 +10,7 @@ export default function LoginScreen(props: { navigation: any; }) {
     const [userPw, setUserPw] = useState("")
     const [loading, setLoading] = useState(false);
     const [visible, setVisible] = useState(false);
+    const [snackBarText, setSnackBarText] = useState('')
     const onLogin = async () => {
         setLoading(true);
         try {
@@ -18,15 +19,24 @@ export default function LoginScreen(props: { navigation: any; }) {
             if (credential) {
                 console.log(credential.user)
                 setVisible(true)
+                setSnackBarText('로그인되었습니다.')
                 setUserId("")
                 setUserPw("")
                 setLoading(false);
                 props.navigation.push("Home");
             }
         } catch (err) {
-            console.log('Error', err);
+            console.log('Error::', err);
+            setVisible(true)
             setLoading(false);
+            setSnackBarText("로그인 정보를 확인해주세요.")
+
+            setTimeout(() => {
+                setVisible(false)
+                setSnackBarText('')
+            }, 2000)
             //로그인 에러시 알림 추가!!!!!!!!!!
+
         }
     };
 
@@ -80,12 +90,13 @@ export default function LoginScreen(props: { navigation: any; }) {
                         전문의 회원 가입
                     </Text>
                 </View>
-                <Snackbar
-                    visible={visible}
-                    onDismiss={() => setVisible(false)}>
-                    로그인되었습니다.
-                </Snackbar>
             </View>
+            <Snackbar
+                visible={visible}
+                onDismiss={() => setVisible(false)}
+                style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <Text>{snackBarText}</Text>
+            </Snackbar>
         </View>
     );
 }
