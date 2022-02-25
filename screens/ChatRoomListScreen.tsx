@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import { RootState } from '../store';
 import { useDispatch, useSelector } from 'react-redux';
-import { setSelectedUserInfo } from '../store/actions/userAction';
+import { setNewMsgCount, setSelectedUserInfo } from '../store/actions/userAction';
 import { Badge } from 'react-native-paper';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -16,6 +16,7 @@ const ChatRoomListScreen = (props: { navigation: any }) => {
     const { currentUserName, currentUserUid, newMsgCount } = useSelector((state: RootState) => state.userReducer)
     const dispatch = useDispatch()
     useEffect(() => {
+        let firstData: { userUid: string, userName: string, roomId: string, lastMsg: string }[] = []
         //get realtime userlist
         const userRef = firestore()
             .collection('users')
@@ -31,9 +32,21 @@ const ChatRoomListScreen = (props: { navigation: any }) => {
                             snapshot.docChanges().forEach(change => {
                                 if (change.type === 'added') {
                                     const lastText = change.doc.data().text
+                                    console.log("왜 여기오냐 ㅠ ")
                                     firestore().collection('users').doc(otherUserUid).get().then(data => {
                                         const otherUserName = data.data()?.name
-                                        setUserList(prev => [...prev, { userUid: otherUserUid, userName: otherUserName, roomId: item, lastMsg: lastText }])
+                                        // when new msg comes remove the exisitng data to replace to a new one
+                                        firstData.forEach(dataItem => {
+                                            if (dataItem.roomId === item && dataItem.lastMsg !== lastText) {
+                                                firstData = firstData.filter(ele => ele.roomId !== item && dataItem.lastMsg !== lastText)
+                                            }
+                                        })
+                                        firstData = [...firstData, { userUid: otherUserUid, userName: otherUserName, roomId: item, lastMsg: lastText }]
+
+                                        // setUserList(prev => [...prev, { userUid: otherUserUid, userName: otherUserName, roomId: item, lastMsg: lastText }])
+                                    }).then(() => {
+                                        console.log("좀 기다려봐 ㅠ")
+                                        setUserList(firstData)
                                     })
                                 }
                             })
@@ -42,7 +55,6 @@ const ChatRoomListScreen = (props: { navigation: any }) => {
 
                 }
             })
-
         return () => {
             userRef()
         };
@@ -56,14 +68,18 @@ const ChatRoomListScreen = (props: { navigation: any }) => {
             roomUserName: [user.userName, currentUserName], // 챗방 유저 이름 
             roomId: user.roomId
         }
+
+        dispatch(setNewMsgCount({ roomId: user.roomId, count: 0 }))
         dispatch(setSelectedUserInfo(info))
         props.navigation.push("Chat", { roomId: user.roomId, roomTitle: user.userName, otherUserUid: user.userUid })
 
     }
     const badgeCounter = (roomId: string) => {
-        let count = 0
-        newMsgCount.forEach(counter => {
-            count = counter.count > 0 && roomId === counter.roomId && counter.count
+        let count: number = 0
+        newMsgCount.forEach((counter: { count: number; roomId: string; }) => {
+            if (counter.count > 0 && roomId === counter.roomId) {
+                count = counter.count
+            }
         })
         return count
     }
