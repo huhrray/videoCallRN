@@ -10,6 +10,7 @@ import HomeCardContainer from '../components/HomeCardContainer';
 import UserInfoContainer from '../components/UserInfoContainer';
 import { useDispatch, useSelector } from 'react-redux';
 import Button from '../components/Button';
+import Modal from 'react-native-modal'
 
 const MainScreen = (props: { navigation: any }) => {
     const dispatch = useDispatch();
@@ -103,35 +104,28 @@ const MainScreen = (props: { navigation: any }) => {
     }
 
     return (
-        <Provider>
-            <ScrollView style={styles.root}>
-                {UserInfoContainer(currentUserName)}
-                <Divider />
-                {HomeCardContainer(props.navigation)}
-                <Portal >
-                    <Dialog visible={incomingCall} onDismiss={() => dispatch(setIncomingCall(false))} style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
-                        <Dialog.Actions style={{ justifyContent: 'space-between' }}>
-                            <Text style={{ fontSize: 15 }}>{`${callerInfo.callerName}님의  비대면 진료 요청`}</Text>
-                            <View style={{ flexDirection: 'row' }}>
-                                <Button
-                                    iconName="phone-slash"
-                                    backgroundColor="red"
-                                    onPress={handleLeave}
-                                    style={styles.diagloBtn}
-                                />
-                                <Button
-                                    iconName="phone"
-                                    backgroundColor="green"
-                                    onPress={acceptCall}
-                                    style={styles.diagloBtn}
-                                />
-                            </View>
-                        </Dialog.Actions>
-                    </Dialog>
-                </Portal>
-            </ScrollView>
-        </Provider>
-
+        <ScrollView style={styles.root}>
+            {UserInfoContainer(currentUserName)}
+            <Divider />
+            {HomeCardContainer(props.navigation)}
+            <Modal isVisible={incomingCall} onDismiss={() => dispatch(setIncomingCall(false))} style={styles.modal}>
+                <Text style={{ fontSize: 15 }}>{`${callerInfo.callerName}님의  비대면 진료 요청`}</Text>
+                <View style={{ flexDirection: 'row' }}>
+                    <Button
+                        iconName="phone-slash"
+                        backgroundColor="red"
+                        onPress={handleLeave}
+                        style={styles.diagloBtn}
+                    />
+                    <Button
+                        iconName="phone"
+                        backgroundColor="green"
+                        onPress={acceptCall}
+                        style={styles.diagloBtn}
+                    />
+                </View>
+            </Modal>
+        </ScrollView>
     )
 }
 
@@ -158,6 +152,18 @@ const styles = StyleSheet.create({
         marginHorizontal: 5,
         width: 50,
         height: 50,
+    },
+    modal: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        position: 'absolute',
+        padding: 10,
+        borderRadius: 10,
+        left: 0,
+        right: 0,
+        top: 0,
+        backgroundColor: '#fff'
     }
 
 })
