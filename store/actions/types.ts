@@ -13,6 +13,7 @@ export const CHAT_REQUESTOR = "CHAT_REQUESTOR"
 export const VOICE_SCRIPT ="VOICE_SCRIPT"
 export const LANGUAGE = "LANGUAGE"
 
+export const GETTING_CALL ="GETTING_CALL"
 export const INCOMING_CALL = 'INCOMING_CALL'
 export const USER_STATUS ='USER_STATUS'
 

@@ -83,7 +83,9 @@ export default function App() {
                 })} />
               <Stack.Screen name="Call" component={CallScreen}
                 options={({ route }: any) => ({
-                  title: route.params.roomTitle
+                  title: route.params.roomTitle,
+                  headerBackButtonMenuEnabled: false,
+                  headerBackVisible: false,
                 })} />
             </Stack.Group>
 

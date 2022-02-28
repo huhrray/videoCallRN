@@ -16,6 +16,7 @@ import {
   NEW_MSG_COUNT,
   CURRENT_USER_TYPE,
   USER_STATUS,
+  GETTING_CALL,
 } from '../actions/types';
 
 const initialState: stateType = {
@@ -29,6 +30,7 @@ const initialState: stateType = {
   requestor: '',
   script: "",
   language: "ko-KR",
+  gettingCall: false,
   incomingCall: false,
   userStatus: true,
   isRecord: false,
@@ -47,6 +49,7 @@ export interface stateType {
   requestor: string,
   script: string,
   language: string,
+  gettingCall:boolean,
   incomingCall: boolean,
   userStatus: boolean,
   isRecord: boolean,
@@ -79,6 +82,8 @@ export function userReducer(
       return { ...state, script: action.payload };
     case LANGUAGE:
       return { ...state, language: action.payload };
+    case GETTING_CALL:
+      return { ...state, gettingCall: action.payload };
     case INCOMING_CALL:
       return { ...state, incomingCall: action.payload };
     case USER_STATUS:

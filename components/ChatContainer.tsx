@@ -12,14 +12,8 @@ import 'react-native-get-random-values'
 import { v4 as uuidv4 } from 'uuid';
 
 export default function ChatContainer(roomId: string | undefined, otherUser: string | undefined) {
-    //To ignore keyboardDidHide evnerListener deprecation warning at firestore
-    LogBox.ignoreAllLogs();
     const dispatch = useDispatch();
     const { currentUserName, currentUserUid, script, language } = useSelector((state: RootState) => state.userReducer);
-    // const [userInfo, setUserInfo] = useState({
-    //     _id: currentUserUid,
-    //     avatar: require('../img/patient_no_img.png'),
-    // });
     const [textInput, setTextInput] = useState('');
     const [message, setMessage] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
     const [text, setText] = useState<string>('');
@@ -27,6 +21,8 @@ export default function ChatContainer(roomId: string | undefined, otherUser: str
     const flatListRef = useRef<FlatList<any>>(null);
     useEffect(() => {
         //voice recognition 
+        Voice.start(language);
+        setIsRecord(true);
         Voice.onSpeechStart = _onSpeechStart;
         Voice.onSpeechEnd = _onSpeechEnd;
         Voice.onSpeechRecognized = _onSpeechRecognized;
@@ -54,13 +50,12 @@ export default function ChatContainer(roomId: string | undefined, otherUser: str
         };
     }, []);
 
-    useEffect(() => {
-        Voice.start(language);
-        setIsRecord(true);
-    }, [Voice]);
+    // useEffect(() => {
+    //     Voice.start(language);
+    //     setIsRecord(true);
+    // }, [Voice]);
 
     useEffect(() => {
-        // isRecord ? setLabel("받아쓰기 중....") : setLabel("마이크가 꺼져있습니다.")
         //녹음시작 종료시마다 시스템 알림음 발생, disable 불가 임시방편으로 볼륨 0으로 조정
         isRecord && SystemSetting.setVolume(0, { type: 'alarm' });
         !isRecord && Voice.isRecognizing() && Voice.destroy()

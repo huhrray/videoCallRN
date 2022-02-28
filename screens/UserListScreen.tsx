@@ -39,14 +39,15 @@ const UserListScreen = (props: { navigation: any }) => {
                         setUserList(currentUsers);
                     } else if (change.type == 'modified') {
                         // listen to user active status
-                        if (change.doc.data().active) {
-                            users.push(change.doc.data())
+                        firestore().collection('currentUsers').get().then(userData => {
+                            userData.docs.forEach(userInfo => {
+                                if (userInfo.data().active && userInfo.data().userUid !== currentUserUid && userInfo.data().userType !== currentUserType) {
+                                    users.push(userInfo.data())
+                                }
+
+                            })
                             setUserList(users)
-                        } else {
-                            setUserList(users.filter(user => {
-                                user.userUid !== change.doc.data().userUid
-                            }))
-                        }
+                        })
                     }
                 });
             })

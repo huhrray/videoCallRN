@@ -14,7 +14,7 @@ interface Props {
 function ButtonContainer(props: Props) {
     return (
         <View style={styles.bContainer}>
-            <Button iconName="phone-slash" backgroundColor="red" onPress={props.hangup} />
+            <Button iconName="phone-slash" backgroundColor="red" onPress={props.hangup} style={styles.btn} />
         </View>
     );
 }
@@ -91,5 +91,9 @@ const styles = StyleSheet.create({
     callEndBtnContainer: {
         flexDirection: "row",
         bottom: 30,
+    },
+    btn: {
+        width: 60,
+        height: 60
     }
 });

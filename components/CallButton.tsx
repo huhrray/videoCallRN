@@ -8,7 +8,7 @@ import Utils from '../components/Utils';
 import firestore, { FirebaseFirestoreTypes, } from '@react-native-firebase/firestore';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { setGettingCall, setIncomingCall, setUserStatus } from '../store/actions/userAction';
+import { setGettingCall, setUserStatus } from '../store/actions/userAction';
 
 const TURN_SERVER_URL = '192.168.0.2:3478';
 const TURN_SERVER_USERNAME = 'seyhuh';
@@ -31,7 +31,7 @@ const PC_CONFIG = {
 };
 const configuration = { iceServers: [{ url: 'stun:stun.l.google.com:19302' }] };
 
-export default function CallScreen(props: { navigation: any; route: any }) {
+export default function CallBtn(props: { navigation: any; route: any }) {
     const [localStream, setLocalStream] = useState<MediaStream | null>();
     const [remoteStream, setRemoteStream] = useState<MediaStream | null>();
     const pc = useRef<RTCPeerConnection>();
@@ -61,6 +61,9 @@ export default function CallScreen(props: { navigation: any; route: any }) {
             snapshot.docChanges().forEach(change => {
                 if (change.type === 'removed') {
                     hangup();
+                    // ?? here userStatus is not actively changed so ! mark was removed ?? 
+                    dispatch(setUserStatus(userStatus))
+                    firestore().collection('currentUsers').doc(currentUserUid).update({ active: userStatus })
                 }
             });
         });
@@ -72,22 +75,12 @@ export default function CallScreen(props: { navigation: any; route: any }) {
                 }
             });
         });
-        !gettingCall && create()
         return () => {
             subscribe();
             subscribeDelete();
             subscribeDeleteModal();
-            dispatch(setGettingCall(false))
-            dispatch(setIncomingCall(false))
-            dispatch(setUserStatus(true))
-            firestore().collection('currentUsers').doc(currentUserUid).update({ active: true })
         };
     }, []);
-
-    useEffect(() => {
-        gettingCall && join()
-    }, [gettingCall])
-
     const setupWebrtc = async () => {
         pc.current = new RTCPeerConnection(configuration);
 
@@ -106,9 +99,8 @@ export default function CallScreen(props: { navigation: any; route: any }) {
     const create = async () => {
         console.log('calling');
         connecting.current = true;
-        dispatch(setUserStatus(false))
-        firestore().collection('currentUsers').doc(currentUserUid).update({ active: false })
-        firestore().collection('currentUsers').doc(selectedUserInfo.targetUserUid).update({ active: false })
+        dispatch(setUserStatus(!userStatus))
+        firestore().collection('currentUsers').doc(currentUserUid).update({ active: !userStatus })
         firestore().collection('incoming').add({ type: 'call', roomId: roomId, callerName: currentUserName, callerUid: currentUserUid, calleeUid: selectedUserInfo.targetUserUid })
         //setup webrtc
         await setupWebrtc();
@@ -165,8 +157,8 @@ export default function CallScreen(props: { navigation: any; route: any }) {
                 cRef.update(cWithAnwer);
             }
         }
-        dispatch(setUserStatus(false))
-        firestore().collection('currentUsers').doc(currentUserUid).update({ active: false })
+        dispatch(setUserStatus(!userStatus))
+        firestore().collection('currentUsers').doc(currentUserUid).update({ active: !userStatus })
     };
     // for disconnectiong the call clse the connection, release the stream  and delete the document for the call
 
@@ -178,7 +170,7 @@ export default function CallScreen(props: { navigation: any; route: any }) {
         if (pc.current) {
             pc.current.close();
         }
-        props.navigation.goBack()
+
     };
 
     //helper function
@@ -236,41 +228,30 @@ export default function CallScreen(props: { navigation: any; route: any }) {
             });
         });
     };
-    // if (gettingCall) {
-    //     return <GettingCall hangup={hangup} join={join} />;
-    // }
 
-    // //displays local stream on calling
-    // //displays both streams once call is connected
-    // if (localStream) {
-    //     return (
-    //         <Video
-    //             hangup={hangup}
-    //             localStream={localStream}
-    //             remoteStream={remoteStream}
-    //             roomId={roomId}
-    //             roomTitle={roomTitle}
-    //         />
-    //     );
-    // }
+    //displays the gettingCall component
+    if (gettingCall) {
+        return <GettingCall hangup={hangup} join={join} />;
+    }
 
+    //displays local stream on calling
+    //displays both streams once call is connected
+    if (localStream) {
+        return (
+            <Video
+                hangup={hangup}
+                localStream={localStream}
+                remoteStream={remoteStream}
+                roomId={roomId}
+                roomTitle={roomTitle}
+            />
+        );
+    }
+
+    //displays the call button
     return (
         <View style={styles.container}>
-            {/* <Button iconName="video" backgroundColor="grey" onPress={create} style={styles.btn} />
-             */}
-            {/* {gettingCall ?
-                <GettingCall hangup={hangup} join={join} /> : null} */}
-            {localStream &&
-                <Video
-                    hangup={hangup}
-                    localStream={localStream}
-                    remoteStream={remoteStream}
-                    roomId={roomId}
-                    roomTitle={roomTitle}
-                />
-            }
-
-
+            <Button iconName="video" backgroundColor="grey" onPress={create} style={styles.btn} />
         </View>
     );
 }

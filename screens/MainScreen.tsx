@@ -1,15 +1,15 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import auth from '@react-native-firebase/auth'
-import { Button, Divider } from 'react-native-paper';
+import { Dialog, Divider, Portal, Provider } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
-import { setCurrentUserAuth, setCurrentUsername, setCurrentUserType, setIncomingCall, setLastSeen, setNewMsgCount } from '../store/actions/userAction';
+import { setCurrentUserAuth, setCurrentUsername, setCurrentUserType, setGettingCall, setIncomingCall, setNewMsgCount, setUserStatus } from '../store/actions/userAction';
 import { RootState } from '../store';
-import Modal from 'react-native-modal'
 import { changeTimeFormat, firestoreDelete } from '../functions/common';
 import HomeCardContainer from '../components/HomeCardContainer';
 import UserInfoContainer from '../components/UserInfoContainer';
 import { useDispatch, useSelector } from 'react-redux';
+import Button from '../components/Button';
 
 const MainScreen = (props: { navigation: any }) => {
     const dispatch = useDispatch();
@@ -73,7 +73,6 @@ const MainScreen = (props: { navigation: any }) => {
                                             })
                                         }
                                     }
-
                                 })
                                 if (count > 0) {
                                     dispatch(setNewMsgCount([...msgCounter, { roomId: room, count: count }]))
@@ -81,20 +80,17 @@ const MainScreen = (props: { navigation: any }) => {
                                 }
                             })
                         }
-
                     })
-
-
                 })
             }
         })
         return () => {
             callListener()
-
         }
     }, [])
 
     const acceptCall = () => {
+        dispatch(setGettingCall(true))
         dispatch(setIncomingCall(false))
         props.navigation.navigate('Call', { roomId: callerInfo.roomId, roomTitle: callerInfo.callerName })
     }
@@ -102,31 +98,40 @@ const MainScreen = (props: { navigation: any }) => {
     const handleLeave = () => {
         firestoreDelete(callerInfo.roomId)
         dispatch(setIncomingCall(false))
+        dispatch(setUserStatus(true))
+        firestore().collection('currentUsers').doc(user?.uid).update({ active: true })
     }
 
     return (
-        <ScrollView style={styles.root}>
-            {UserInfoContainer(currentUserName)}
-            <Divider />
-            {HomeCardContainer(props.navigation)}
-            <Modal isVisible={incomingCall} onDismiss={() => dispatch(setIncomingCall(false))} >
-                <View
-                    style={{
-                        backgroundColor: 'white',
-                        padding: 22,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        borderRadius: 4,
-                        borderColor: 'rgba(0, 0, 0, 0.1)',
-                    }}>
-                    <Text>{`${callerInfo.callerName}이 영상통화를 요청하셨습니다`}?</Text>
-                    <Button onPress={acceptCall}>수락</Button>
-                    <Button testID="Reject Call" onPress={handleLeave}>
-                        거절
-                    </Button>
-                </View>
-            </Modal>
-        </ScrollView>
+        <Provider>
+            <ScrollView style={styles.root}>
+                {UserInfoContainer(currentUserName)}
+                <Divider />
+                {HomeCardContainer(props.navigation)}
+                <Portal >
+                    <Dialog visible={incomingCall} onDismiss={() => dispatch(setIncomingCall(false))} style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
+                        <Dialog.Actions style={{ justifyContent: 'space-between' }}>
+                            <Text style={{ fontSize: 15 }}>{`${callerInfo.callerName}님의  비대면 진료 요청`}</Text>
+                            <View style={{ flexDirection: 'row' }}>
+                                <Button
+                                    iconName="phone-slash"
+                                    backgroundColor="red"
+                                    onPress={handleLeave}
+                                    style={styles.diagloBtn}
+                                />
+                                <Button
+                                    iconName="phone"
+                                    backgroundColor="green"
+                                    onPress={acceptCall}
+                                    style={styles.diagloBtn}
+                                />
+                            </View>
+                        </Dialog.Actions>
+                    </Dialog>
+                </Portal>
+            </ScrollView>
+        </Provider>
+
     )
 }
 
@@ -149,5 +154,10 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         marginHorizontal: 10,
     },
+    diagloBtn: {
+        marginHorizontal: 5,
+        width: 50,
+        height: 50,
+    }
 
 })

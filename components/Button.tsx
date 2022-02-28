@@ -6,7 +6,8 @@ interface Props {
     onPress?: any;
     iconName: string;
     backgroundColor: string;
-    style?: any;
+    style: any;
+    iconSize?: number
 }
 export default function Button(props: Props) {
     return (
@@ -17,9 +18,10 @@ export default function Button(props: Props) {
                     { backgroundColor: props.backgroundColor },
                     props.style,
                     styles.button,
+
                 ]}
             >
-                <Icon name={props.iconName} color="white" size={20} />
+                <Icon name={props.iconName} color="white" size={props.iconSize ? props.iconSize : 20} />
             </TouchableOpacity>
         </View>
     );
@@ -27,8 +29,8 @@ export default function Button(props: Props) {
 
 const styles = StyleSheet.create({
     button: {
-        width: 60,
-        height: 60,
+        // width: 60,
+        // height: 60,
         padding: 10,
         elevation: 10,
         justifyContent: "center",
