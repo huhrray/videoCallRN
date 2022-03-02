@@ -10,26 +10,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { setGettingCall, setIncomingCall, setUserStatus } from '../store/actions/userAction';
 
-const TURN_SERVER_URL = '192.168.0.2:3478';
+// const TURN_SERVER_URL = '192.168.0.2:3478';
+const TURN_SERVER_URL = '175.197.203.14:3478';
 const TURN_SERVER_USERNAME = 'seyhuh';
 const TURN_SERVER_CREDENTIAL = '1234';
 // WebRTC config: you don't have to change this for the example to work
-// If you are testing in local network, you can just use PC_CONFIG = {iceServers: []}
-const PC_CONFIG = {
-    iceServers: [
-        {
-            urls: 'turn:' + TURN_SERVER_URL + '?transport=tcp',
-            username: TURN_SERVER_USERNAME,
-            credential: TURN_SERVER_CREDENTIAL
-        },
-        {
-            urls: 'turn:' + TURN_SERVER_URL + '?transport=udp',
-            username: TURN_SERVER_USERNAME,
-            credential: TURN_SERVER_CREDENTIAL
-        }
-    ]
-};
-const configuration = { iceServers: [{ url: 'stun:stun.l.google.com:19302' }] };
+// const configuration = { iceServers: [{ url: 'stun:stun.l.google.com:19302' }] };
+const configuration = { iceServers: [{ url: 'turn:' + TURN_SERVER_URL + '?transport=tcp', username: TURN_SERVER_USERNAME, credential: TURN_SERVER_CREDENTIAL }] }
 
 export default function CallScreen(props: { navigation: any; route: any }) {
     const [localStream, setLocalStream] = useState<MediaStream | null>();
@@ -90,7 +77,6 @@ export default function CallScreen(props: { navigation: any; route: any }) {
 
     const setupWebrtc = async () => {
         pc.current = new RTCPeerConnection(configuration);
-
         //get the audio and video stream for the call
         const stream = await Utils.getStream();
         if (stream) {
@@ -205,6 +191,7 @@ export default function CallScreen(props: { navigation: any; route: any }) {
             });
             const listener = await firestore().collection('incoming').get();
             listener.forEach(async doc => {
+                dispatch(setIncomingCall(false))
                 await doc.ref.delete()
             })
             cRef.delete();
@@ -217,6 +204,7 @@ export default function CallScreen(props: { navigation: any; route: any }) {
         localName: string,
         remoteName: string,
     ) => {
+
         const candidateCollection = cRef.collection(localName);
         if (pc.current) {
             //on new ICE candidate add it to firestore
@@ -231,6 +219,7 @@ export default function CallScreen(props: { navigation: any; route: any }) {
             snapshot.docChanges().forEach((change: any) => {
                 if (change.type === 'added') {
                     const candidate = new RTCIceCandidate(change.doc.data());
+
                     pc.current?.addIceCandidate(candidate);
                 }
             });
