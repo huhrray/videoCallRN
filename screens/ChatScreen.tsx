@@ -3,15 +3,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { changeTimeFormat, checkNewMsgs, leftTimeSubscribe } from '../functions/common';
+import { changeTimeFormat } from '../functions/common';
 import Voice from '@react-native-voice/voice';
 import SystemSetting from 'react-native-system-setting';
-import { setLastSeen, setNewMsgCount, setVoiceScript } from '../store/actions/userAction';
-import { Button, Dialog, Menu, Modal, Provider, TextInput } from 'react-native-paper';
+import { setNewMsgCount, setVoiceScript } from '../store/actions/userAction';
+import { ActivityIndicator, Button, Modal, Provider, TextInput } from 'react-native-paper';
 import 'react-native-get-random-values'
 import { v4 as uuidv4 } from 'uuid';
-import { Asset, CameraOptions, ImageLibraryOptions, launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { camOptions, libOptions } from '../functions/values';
+import { firebase } from '@react-native-firebase/storage'
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default function ChatScreen(props: { navigation: any; route: any }) {
     //To ignore keyboardDidHide evnerListener deprecation warning at firestore
@@ -21,7 +23,7 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
     const { roomId, otherUserUid } = props.route.params;
     // chatting elements
     const [textInput, setTextInput] = useState('');
-    const [message, setMessage] = useState<FirebaseFirestoreTypes.DocumentData[]>([]);
+    const [message, setMessage] = useState<(FirebaseFirestoreTypes.DocumentData | string)[]>([]);
 
     //voice recognized Text
     const [text, setText] = useState<string>('');
@@ -33,6 +35,7 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
 
     //open a small tab on plus icon
     const [tab, setTab] = useState(false)
+    const [isPhotoLoading, setIsPhotoLoading] = useState(false)
 
     useEffect(() => {
         //voice recognition 
@@ -44,12 +47,11 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         setTimeout(() => flatListRef.current?.scrollToEnd(), 300)
         // for real time update
         const subscribe = firestore().collection('chat').doc(roomId).collection('message').onSnapshot(snapshot => {
-            snapshot.docChanges().forEach(change => {
+            snapshot.docChanges().forEach(async change => {
                 if (change.type == 'added') {
                     let data: FirebaseFirestoreTypes.DocumentData = change.doc.data();
-                    data.createdAt = data.createdAt.toDate();
-                    setMessage(prev => [...prev, data])
-
+                    const newData = await dataSetting(data)
+                    !isPhotoLoading && setMessage(prev => [...prev, newData])
                 }
             });
         });
@@ -74,9 +76,6 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
 
         //마지막으로 읽은 위치 찾아가기 
         //newMsgCount로 높이 계산해서 위치 찾기??
-
-        console.log(newMsgCount, '들어왔어')
-
         return () => {
             subscribe();
             Voice.destroy().then(Voice.removeAllListeners);
@@ -98,7 +97,20 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         dispatch(setVoiceScript(script + text));
     }, [text]);
 
+    //to load images from firestore
+    const dataSetting = async (data: FirebaseFirestoreTypes.DocumentData) => {
+        data.createdAt = data.createdAt.toDate();
+        if (data.type === 'image') {
 
+            setIsPhotoLoading(true)
+            firebase.storage().ref(data.text).getDownloadURL().then(photoUrl => {
+                data.text = photoUrl
+                setIsPhotoLoading(false)
+            })
+
+        }
+        return data
+    }
     //set when the user left the chat room 
     function setLeftTime() {
         firestore().collection('chat').doc(roomId).collection('leftAt').doc(currentUserUid).get().then((doc) => {
@@ -115,13 +127,15 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
 
     }
 
-    function sendMsg(message: string | undefined, type: string) {
+    function sendMsg(message: string | undefined, type: string, imgUri?: string) {
         // send msg to roomId collection in Firestore
         let msgType
         if (type === 'voice') {
             msgType = 'voice'
         } else if (type === 'image') {
             msgType = 'image'
+            firebase.storage().ref(imgUri).putFile(message!).then((snapshot) => {
+            }).catch((e) => console.log('uploading image error => ', e));
         } else if (type === "system") {
             msgType = 'system'
         } else {
@@ -129,7 +143,7 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         }
         let msg = {
             _id: uuidv4(),
-            text: message,
+            text: type === 'image' ? imgUri : message,
             createdAt: new Date(),
             type: msgType,
             user: {
@@ -169,29 +183,39 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
     const selectPhoto = async () => {
         await launchImageLibrary(libOptions, res => {
             if (res.assets) {
-                sendMsg(res.assets[0].uri, 'image')
+
+                console.log("너두보내보내")
+                sendMsg(res.assets[0].uri, 'image', res.assets[0].fileName)
                 setTab(false)
             }
         });
     }
     const takePhoto = async () => {
         try {
-            const isGranted = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.CAMERA);
-            if (isGranted) {
+
+            const isGrantedCamera = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.CAMERA);
+            const isGrantedWrite = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE);
+
+            if (isGrantedCamera && isGrantedWrite) {
                 launchCamera(camOptions, res => {
                     if (res.assets) {
-                        sendMsg(res.assets[0].uri, 'image')
+                        console.log("보내보내")
+                        sendMsg(res.assets[0].uri, 'image', res.assets[0].fileName)
                         setTab(false)
+                    } else if (res.errorCode) {
+                        console.log(res.errorCode)
                     }
                 })
             } else {
-                const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
-
-                if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                // camera & write permission requests
+                const grantedCam = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
+                const grantedWrite = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE);
+                if ((grantedCam && grantedWrite) === PermissionsAndroid.RESULTS.GRANTED) {
                     console.log("Camera permission given");
                     launchCamera(camOptions, res => {
                         if (res.assets) {
-                            sendMsg(res.assets[0].uri, 'image')
+                            console.log(res.assets[0])
+                            sendMsg(res.assets[0].uri, 'image', res.assets[0].fileName)
                             setTab(false)
                         }
                     });
@@ -261,11 +285,14 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         }
     }
     const renderMessage = (msg: any) => {
-        //image src uri should be clouds hosting uri, not local !!!!!!!!!!%%%%%%%%%%%
         if (msg.item.type === 'image') {
             return (
                 <View style={colorStyle(msg.item)}>
-                    <Image style={{ width: 100, height: 100 }} source={{ uri: msg.item.text }} />
+                    {!isPhotoLoading ?
+                        <Image style={{ width: 100, height: 100 }} source={{ uri: msg.item.text }} />
+                        :
+                        <ActivityIndicator animating={isPhotoLoading} color={'#2247f1'} />
+                    }
                 </View>)
         } else {
             return (
@@ -274,6 +301,7 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
                 </View>
             )
         }
+
 
     };
 

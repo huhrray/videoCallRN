@@ -32,6 +32,7 @@ const ChatRoomListScreen = (props: { navigation: any }) => {
                             snapshot.docChanges().forEach(change => {
                                 if (change.type === 'added') {
                                     const lastText = change.doc.data().text
+                                    const lastTextType = change.doc.data().type
                                     firestore().collection('users').doc(otherUserUid).get().then(data => {
                                         const otherUserName = data.data()?.name
                                         // when new msg comes remove the exisitng data to replace to a new one
@@ -40,8 +41,7 @@ const ChatRoomListScreen = (props: { navigation: any }) => {
                                                 firstData = firstData.filter(ele => ele.roomId !== item && dataItem.lastMsg !== lastText)
                                             }
                                         })
-                                        firstData = [...firstData, { userUid: otherUserUid, userName: otherUserName, roomId: item, lastMsg: lastText }]
-
+                                        firstData = [...firstData, { userUid: otherUserUid, userName: otherUserName, roomId: item, lastMsg: lastTextType === 'image' ? "Photo" : lastText }]
                                         // setUserList(prev => [...prev, { userUid: otherUserUid, userName: otherUserName, roomId: item, lastMsg: lastText }])
                                     }).then(() => {
                                         setUserList(firstData)
@@ -88,7 +88,6 @@ const ChatRoomListScreen = (props: { navigation: any }) => {
         return (
             <TouchableOpacity
                 style={styles.btnView}
-
                 onPress={() => moveToChatRoom(user)}>
                 <View style={styles.btnTextView}>
                     <Text style={{

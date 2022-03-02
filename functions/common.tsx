@@ -1,4 +1,5 @@
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import { firebase } from '@react-native-firebase/storage';
 
 /** * 현재날짜 yyyyMMddHHmmsss형태로 반환 */
 export function changeTimeFormat(time?: any) {
