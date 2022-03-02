@@ -21,6 +21,8 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
     const dispatch = useDispatch();
     const { currentUserName, currentUserUid, script, language, newMsgCount } = useSelector((state: RootState) => state.userReducer);
     const { roomId, otherUserUid } = props.route.params;
+    //loader before the chatmsg logs render
+    const [isLoading, setIsLoading] = useState(true)
     // chatting elements
     const [textInput, setTextInput] = useState('');
     const [message, setMessage] = useState<(FirebaseFirestoreTypes.DocumentData | string)[]>([]);
@@ -29,9 +31,6 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
     const [text, setText] = useState<string>('');
     const [isRecord, setIsRecord] = useState<boolean>(false);
     const flatListRef = useRef<FlatList<any>>(null);
-
-    //User left at 
-    // const leftAt = leftTimeSubscribe()
 
     //open a small tab on plus icon
     const [tab, setTab] = useState(false)
@@ -52,6 +51,7 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
                     let data: FirebaseFirestoreTypes.DocumentData = change.doc.data();
                     const newData = await dataSetting(data)
                     !isPhotoLoading && setMessage(prev => [...prev, newData])
+                    setIsLoading(false)
                 }
             });
         });
@@ -101,7 +101,6 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
     const dataSetting = async (data: FirebaseFirestoreTypes.DocumentData) => {
         data.createdAt = data.createdAt.toDate();
         if (data.type === 'image') {
-
             setIsPhotoLoading(true)
             firebase.storage().ref(data.text).getDownloadURL().then(photoUrl => {
                 data.text = photoUrl
@@ -127,14 +126,14 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
 
     }
 
-    function sendMsg(message: string | undefined, type: string, imgUri?: string) {
+    async function sendMsg(message: string | undefined, type: string, imgUri?: string) {
         // send msg to roomId collection in Firestore
         let msgType
         if (type === 'voice') {
             msgType = 'voice'
         } else if (type === 'image') {
             msgType = 'image'
-            firebase.storage().ref(imgUri).putFile(message!).then((snapshot) => {
+            await firebase.storage().ref(imgUri).putFile(message!).then((snapshot) => {
             }).catch((e) => console.log('uploading image error => ', e));
         } else if (type === "system") {
             msgType = 'system'
@@ -183,8 +182,6 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
     const selectPhoto = async () => {
         await launchImageLibrary(libOptions, res => {
             if (res.assets) {
-
-                console.log("너두보내보내")
                 sendMsg(res.assets[0].uri, 'image', res.assets[0].fileName)
                 setTab(false)
             }
@@ -199,7 +196,6 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
             if (isGrantedCamera && isGrantedWrite) {
                 launchCamera(camOptions, res => {
                     if (res.assets) {
-                        console.log("보내보내")
                         sendMsg(res.assets[0].uri, 'image', res.assets[0].fileName)
                         setTab(false)
                     } else if (res.errorCode) {
@@ -288,11 +284,7 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         if (msg.item.type === 'image') {
             return (
                 <View style={colorStyle(msg.item)}>
-                    {!isPhotoLoading ?
-                        <Image style={{ width: 100, height: 100 }} source={{ uri: msg.item.text }} />
-                        :
-                        <ActivityIndicator animating={isPhotoLoading} color={'#2247f1'} />
-                    }
+                    <Image style={{ width: 100, height: 100 }} source={{ uri: msg.item.text }} />
                 </View>)
         } else {
             return (
@@ -312,14 +304,19 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
                 <KeyboardAvoidingView
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
                     style={{ flex: 1 }}>
-                    <View style={styles.chatLogContainer}>
-                        <FlatList
-                            ref={flatListRef}
-                            data={message}
-                            onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
-                            renderItem={msg => renderMessage(msg)}
-                            keyExtractor={(item, index) => index.toString()}
-                        />
+                    <View style={[styles.chatLogContainer, isLoading && {
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }]}>
+                        {isLoading ? <ActivityIndicator animating={isLoading} color={'#2247f1'} /> :
+                            <FlatList
+                                ref={flatListRef}
+                                data={message}
+                                onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+                                renderItem={msg => renderMessage(msg)}
+                                keyExtractor={(item, index) => index.toString()}
+                            />
+                        }
                     </View>
                     <View style={{ marginHorizontal: 10 }}>
                         <TextInput
