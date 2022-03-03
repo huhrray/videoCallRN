@@ -1,7 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import auth from '@react-native-firebase/auth'
-import { Dialog, Divider, Portal, Provider } from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import { setCurrentUserAuth, setCurrentUsername, setCurrentUserType, setGettingCall, setIncomingCall, setNewMsgCount, setUserStatus } from '../store/actions/userAction';
 import { RootState } from '../store';
@@ -11,6 +10,8 @@ import UserInfoContainer from '../components/UserInfoContainer';
 import { useDispatch, useSelector } from 'react-redux';
 import Button from '../components/Button';
 import Modal from 'react-native-modal'
+import { windowHeight, windowWidth } from '../functions/values';
+import { Divider } from 'react-native-paper';
 
 const MainScreen = (props: { navigation: any }) => {
     const dispatch = useDispatch();
@@ -105,26 +106,29 @@ const MainScreen = (props: { navigation: any }) => {
 
     return (
         <ScrollView style={styles.root}>
-            {UserInfoContainer(currentUserName)}
-            <Divider />
-            {HomeCardContainer(props.navigation)}
-            <Modal isVisible={incomingCall} onDismiss={() => dispatch(setIncomingCall(false))} style={styles.modal}>
-                <Text style={{ fontSize: 15 }}>{`${callerInfo.callerName}님의  비대면 진료 요청`}</Text>
-                <View style={{ flexDirection: 'row' }}>
-                    <Button
-                        iconName="phone-slash"
-                        backgroundColor="red"
-                        onPress={handleLeave}
-                        style={styles.diagloBtn}
-                    />
-                    <Button
-                        iconName="phone"
-                        backgroundColor="green"
-                        onPress={acceptCall}
-                        style={styles.diagloBtn}
-                    />
-                </View>
-            </Modal>
+            <View style={styles.container}>
+                {UserInfoContainer(currentUserName)}
+                <Divider />
+                {HomeCardContainer(props.navigation)}
+                <Modal isVisible={incomingCall} onDismiss={() => dispatch(setIncomingCall(false))} style={styles.modal}>
+                    <Text style={{ fontSize: 15 }}>{`${callerInfo.callerName}님의  비대면 진료 요청`}</Text>
+                    <View style={{ flexDirection: 'row' }}>
+                        <Button
+                            iconName="phone-slash"
+                            backgroundColor="red"
+                            onPress={handleLeave}
+                            style={styles.diagloBtn}
+                        />
+                        <Button
+                            iconName="phone"
+                            backgroundColor="green"
+                            onPress={acceptCall}
+                            style={styles.diagloBtn}
+                        />
+                    </View>
+                </Modal>
+
+            </View>
         </ScrollView>
     )
 }
@@ -133,20 +137,14 @@ export default MainScreen
 
 const styles = StyleSheet.create({
     root: {
-        flex: 1
+        flex: 1,
+        backgroundColor: '#EBF4FA',
+        // marginHorizontal: 15
     },
-    btnContent: {
+    container: {
+        flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        height: 60,
-    },
-    btn: {
-        height: 50,
-        alignItems: 'stretch',
-        justifyContent: 'center',
-        fontSize: 18,
-        marginBottom: 10,
-        marginHorizontal: 10,
+        height: windowHeight,
     },
     diagloBtn: {
         marginHorizontal: 5,
@@ -164,6 +162,7 @@ const styles = StyleSheet.create({
         right: 0,
         top: 0,
         backgroundColor: '#fff'
-    }
+    },
+
 
 })

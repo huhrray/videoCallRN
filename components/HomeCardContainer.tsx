@@ -1,51 +1,74 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
-import { Card } from 'react-native-paper'
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { windowHeight, windowWidth } from '../functions/values';
 
 const HomeCardContainer = (navigation: any) => {
     return (
-        <View style={styles.bContainer}>
+        <View style={styles.container}>
+            <View style={{ width: 20, height: 10, borderColor: 'black', borderTopWidth: 3, marginLeft: 15 }} />
             <Text style={styles.subheading}>원하시는 치료를 받아보세요</Text>
-            <View style={styles.cardContainer}>
-                <Card style={styles.card}>
-                    <Card.Content style={styles.cardContent}>
-                        <Icon name="star-four-points-outline" color="#2247f1" size={35} />
-                        <Text>치아미백</Text>
-                    </Card.Content>
-                </Card>
-                <Card style={styles.card} >
-                    <Card.Content style={styles.cardContent} >
-                        <Icon name="screw-lag" color="#2247f1" size={35} />
-                        <Text>임플란트</Text>
-                    </Card.Content>
-                </Card>
-                <Card style={styles.card}>
-                    <Card.Content style={styles.cardContent} >
-                        <Icon name="toothbrush" color="#2247f1" size={35} />
-                        <Text>충치치료</Text>
-                    </Card.Content>
-                </Card>
-            </View>
-            <View style={styles.cardContainer}>
-                <Card style={styles.card}>
-                    <Card.Content style={styles.cardContent}>
-                        <Icon name="needle" color="#2247f1" size={35} />
-                        <Text>신경치료</Text>
-                    </Card.Content>
-                </Card>
-                <Card style={styles.card}>
-                    <Card.Content style={styles.cardContent}>
-                        <Icon name="tooth-outline" color="#2247f1" size={35} />
-                        <Text>치주치료</Text>
-                    </Card.Content>
-                </Card>
-                <Card style={styles.card}  >
-                    <Card.Content style={styles.cardContent}>
-                        <Icon name="stethoscope" color="#2247f1" size={35} />
-                        <Text>비대면 진료</Text>
-                    </Card.Content>
-                </Card>
+            <View style={styles.cardOuterContainer}>
+                <View style={styles.cardContainer}>
+                    <View style={styles.card}>
+                        <View style={styles.cardContent}>
+                            <Icon name="star-four-points-outline" color="#2247f1" size={40} />
+                            <Text style={styles.cardText}>치아미백</Text>
+                        </View>
+                    </View>
+                    <View style={styles.card} >
+                        <View style={styles.cardContent} >
+                            <Icon name="screw-lag" color="#2247f1" size={40} />
+                            <Text style={styles.cardText}>임플란트</Text>
+                        </View>
+                    </View>
+                    <View style={styles.card}>
+                        <View style={styles.cardContent} >
+                            <Icon name="toothbrush" color="#2247f1" size={40} />
+                            <Text style={styles.cardText}>충치치료</Text>
+                        </View>
+                    </View>
+                </View>
+                <View style={styles.cardContainer}>
+                    <View style={styles.card}>
+                        <View style={styles.cardContent}>
+                            <Icon name="needle" color="#2247f1" size={40} />
+                            <Text style={styles.cardText}>신경치료</Text>
+                        </View>
+                    </View>
+                    <View style={styles.card}>
+                        <View style={styles.cardContent}>
+                            <Icon name="tooth-outline" color="#2247f1" size={40} />
+                            <Text style={styles.cardText}>치주치료</Text>
+                        </View>
+                    </View>
+                    <View style={styles.card}  >
+                        <View style={styles.cardContent}>
+                            <Icon name="stethoscope" color="#2247f1" size={40} />
+                            <Text style={styles.cardText}>비대면 진료</Text>
+                        </View>
+                    </View>
+                </View>
+                <View style={styles.cardContainer}>
+                    <View style={styles.card}  >
+                        <View style={styles.cardContent}>
+                            <Icon name="vector-square" color="#2247f1" size={40} />
+                            <Text style={styles.cardText}>치아교정</Text>
+                        </View>
+                    </View>
+                    <View style={styles.card}  >
+                        <View style={styles.cardContent}>
+                            <Icon name="camera-iris" color="#2247f1" size={40} />
+                            <Text style={styles.cardText}>치아촬영</Text>
+                        </View>
+                    </View>
+                    <View style={styles.card}  >
+                        <View style={styles.cardContent}>
+                            <Icon name="text-box-multiple-outline" color="#2247f1" size={40} />
+                            <Text style={styles.cardText}>진료기록</Text>
+                        </View>
+                    </View>
+                </View>
             </View>
         </View>
     )
@@ -54,31 +77,42 @@ const HomeCardContainer = (navigation: any) => {
 export default HomeCardContainer
 
 const styles = StyleSheet.create({
-    bContainer: {
-        width: "100%",
-        height: 350,
-        justifyContent: "center",
-        alignItems: "center"
+    container: {
+        width: windowWidth,
+        height: windowHeight * 0.9,
+        // flexDirection: 'column',
     },
     subheading: {
         fontWeight: "bold",
-        fontSize: 20
+        fontSize: 18,
+        marginHorizontal: 15
     },
     card: {
-        width: 110,
-        height: 140,
-        marginHorizontal: 5,
+        width: windowWidth * 0.3,
+        height: windowHeight * 0.2,
+        // marginHorizontal: 5,
         marginVertical: 5,
         alignItems: 'center',
         justifyContent: "center",
-        elevation: 4,
+        elevation: 10,
+        backgroundColor: '#fff',
+        borderRadius: 10
     },
     cardContent: {
-        top: 20,
         alignItems: 'center',
         justifyContent: "center",
     },
+    cardText: {
+        fontSize: 15
+    },
     cardContainer: {
         flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
     },
+    cardOuterContainer: {
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginHorizontal: 15
+    }
 })
