@@ -1,4 +1,4 @@
-import { View, StyleSheet, ViewStyle } from "react-native";
+import { View, StyleSheet, KeyboardAvoidingView } from "react-native";
 import React from "react";
 import { MediaStream, RTCView } from "react-native-webrtc";
 import Button from "./Button";
@@ -44,14 +44,14 @@ export default function Video(props: Props) {
                 />
 
                 <ButtonContainer hangup={props.hangup} />
-                <View style={styles.cContainer}>
+                <KeyboardAvoidingView style={styles.cContainer}>
                     {ChatContainer(props.roomId, props.roomTitle)}
                     <RTCView
                         streamURL={props.localStream.toURL()}
                         objectFit={"cover"}
                         style={styles.videoLocal}
                     />
-                </View>
+                </KeyboardAvoidingView>
             </View>
         );
     }
@@ -84,9 +84,9 @@ const styles = StyleSheet.create({
     },
     cContainer: {
         position: "absolute",
-        bottom: 30,
+        // bottom: 20,
         width: "100%",
-        paddingHorizontal: 10,
+        // paddingHorizontal: 10,
     },
     callEndBtnContainer: {
         flexDirection: "row",

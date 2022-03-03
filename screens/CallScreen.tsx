@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Button from '../components/Button';
-import GettingCall from '../components/GettingCall';
 import Video from '../components/Video';
 import { EventOnAddStream, MediaStream, RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, } from 'react-native-webrtc';
 import Utils from '../components/Utils';

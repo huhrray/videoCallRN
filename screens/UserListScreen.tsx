@@ -90,16 +90,30 @@ const UserListScreen = (props: { navigation: any }) => {
     }
 
     const moveToCallRoom = (user: FirebaseFirestoreTypes.DocumentData) => {
-        let room: string = `@make@${user.userUid}@with@${currentUserUid}`
-        const info = {
-            targetUserUid: user.userUid,
-            targetUserName: user.userName,
-            roomUserlist: [user.userUid, currentUserUid],// 영상챗방 유저리스트 
-            roomUserName: [user.userName, currentUserName], // 영상챗방 유저 이름 
-            roomId: room
-        }
-        dispatch(setSelectedUserInfo(info))
-        props.navigation.push("Call", { roomId: room, roomTitle: user.userName })
+        let room: string
+        let exist: boolean = false
+        firestore().collection('chat').doc(`@make@${user.userUid}@with@${currentUserUid}`).collection('message').get().then(doc => {
+            doc.forEach(data => {
+                if (data.exists) {
+                    exist = true
+                }
+            })
+        }).then(() => {
+            if (exist) {
+                room = `@make@${user.userUid}@with@${currentUserUid}`
+            } else {
+                room = `@make@${currentUserUid}@with@${user.userUid}`
+            }
+            const info = {
+                targetUserUid: user.userUid,
+                targetUserName: user.userName,
+                roomUserlist: [user.userUid, currentUserUid],// 영상챗방 유저리스트 
+                roomUserName: [user.userName, currentUserName], // 영상챗방 유저 이름 
+                roomId: room
+            }
+            dispatch(setSelectedUserInfo(info))
+            props.navigation.push("Call", { roomId: room, roomTitle: user.userName })
+        })
     }
 
 

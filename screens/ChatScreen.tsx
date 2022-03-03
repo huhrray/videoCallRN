@@ -11,9 +11,9 @@ import { ActivityIndicator, Button, Modal, Provider, TextInput } from 'react-nat
 import 'react-native-get-random-values'
 import { v4 as uuidv4 } from 'uuid';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import { camOptions, libOptions } from '../functions/values';
+import { camOptions, libOptions, windowHeight } from '../functions/values';
 import { firebase } from '@react-native-firebase/storage'
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { useKeyboard } from '@react-native-community/hooks';
 
 export default function ChatScreen(props: { navigation: any; route: any }) {
     //To ignore keyboardDidHide evnerListener deprecation warning at firestore
@@ -36,7 +36,11 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
     const [tab, setTab] = useState(false)
     const [isPhotoLoading, setIsPhotoLoading] = useState(false)
 
+    //keyboard height
+    const keyboardSize = useKeyboard()
+
     useEffect(() => {
+
         //voice recognition 
         Voice.onSpeechStart = _onSpeechStart;
         Voice.onSpeechEnd = _onSpeechEnd;
@@ -125,7 +129,6 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
         dispatch(setNewMsgCount(newCounter))
 
     }
-
     async function sendMsg(message: string | undefined, type: string, imgUri?: string) {
         // send msg to roomId collection in Firestore
         let msgType
@@ -280,108 +283,97 @@ export default function ChatScreen(props: { navigation: any; route: any }) {
             }
         }
     }
-    const renderMessage = (msg: any) => {
-        if (msg.item.type === 'image') {
-            return (
-                <View style={colorStyle(msg.item)}>
-                    <Image style={{ width: 100, height: 100 }} source={{ uri: msg.item.text }} />
-                </View>)
-        } else {
-            return (
-                <View style={colorStyle(msg.item)}>
-                    <Text style={styles.bubbleText}>{msg.item.text}</Text>
-                </View>
-            )
-        }
 
-
-    };
 
 
     return (
         <Provider>
-            <View style={styles.chatContainer}>
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    style={{ flex: 1 }}>
-                    <View style={[styles.chatLogContainer, isLoading && {
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }]}>
-                        {isLoading ? <ActivityIndicator animating={isLoading} color={'#2247f1'} /> :
-                            <FlatList
-                                ref={flatListRef}
-                                data={message}
-                                onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
-                                renderItem={msg => renderMessage(msg)}
-                                keyExtractor={(item, index) => index.toString()}
-                            />
-                        }
-                    </View>
-                    <View style={{ marginHorizontal: 10 }}>
-                        <TextInput
-                            mode="outlined"
-                            outlineColor="#2247f1"
-                            activeOutlineColor='#2247f1'
-                            style={styles.inputBox}
-                            value={textInput}
-                            onChangeText={text => setTextInput(text)}
-                            theme={{ roundness: 30 }}
-                            left={
-                                <TextInput.Icon
-                                    name="microphone"
-                                    color={isRecord ? '#2247f1' : 'grey'}
-                                    size={30}
-                                    onPress={handleRecord}
-                                />
-                            }
-                            right={
-                                textInput.length > 0 ?
-                                    < TextInput.Icon
-                                        name="arrow-up-circle"
-                                        color="red"
-                                        size={30}
-                                        onPress={() => sendMsg(textInput, 'text')}
-                                    /> : < TextInput.Icon
-                                        name="plus"
-                                        color="#2247f1"
-                                        size={30}
-                                        onPress={() => setTab(true)}
-                                    />
-                            }
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={44}
+                style={styles.chatContainer}>
+                <View style={[{ height: keyboardSize.keyboardShown ? windowHeight * 0.35 : windowHeight * 0.75 }, isLoading && {
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }]}>
+                    {isLoading ? <ActivityIndicator animating={isLoading} color={'#2247f1'} /> :
+                        <FlatList
+                            ref={flatListRef}
+                            data={message}
+                            onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+                            renderItem={msg => msg.item.type === 'image' ?
+                                <View style={colorStyle(msg.item)}>
+                                    <Image style={{ width: 100, height: 100 }} source={{ uri: msg.item.text }} />
+                                </View>
+                                :
+                                <View style={colorStyle(msg.item)}>
+                                    <Text style={styles.bubbleText}>{msg.item.text}</Text>
+                                </View>}
+
+                            keyExtractor={(item, index) => index.toString()}
                         />
-                    </View>
-                    <Modal
-                        visible={tab}
-                        onDismiss={() => setTab(false)}
-                        contentContainerStyle={styles.modal}>
-                        <Button onPress={() => selectPhoto()}>앨범에서 고르기</Button>
-                        <Button onPress={() => takePhoto()}>사진 찍기</Button>
-                    </Modal>
-                </KeyboardAvoidingView>
-            </View>
-        </Provider>
+                    }
+                </View>
+
+                <TextInput
+                    mode="outlined"
+                    outlineColor="#2247f1"
+                    activeOutlineColor='#2247f1'
+                    style={styles.inputBox}
+                    value={textInput}
+                    onChangeText={text => setTextInput(text)}
+                    theme={{ roundness: 30 }}
+                    left={
+                        <TextInput.Icon
+                            name="microphone"
+                            color={isRecord ? '#2247f1' : 'grey'}
+                            size={30}
+                            onPress={handleRecord}
+                        />
+                    }
+                    right={
+                        textInput.length > 0 ?
+                            < TextInput.Icon
+                                name="arrow-up-circle"
+                                color="red"
+                                size={30}
+                                onPress={() => sendMsg(textInput, 'text')}
+                            /> : < TextInput.Icon
+                                name="plus"
+                                color="#2247f1"
+                                size={30}
+                                onPress={() => setTab(true)}
+                            />
+                    }
+                />
+                <Modal
+                    visible={tab}
+                    onDismiss={() => setTab(false)}
+                    contentContainerStyle={styles.modal}>
+                    <Button onPress={() => selectPhoto()}>앨범에서 고르기</Button>
+                    <Button onPress={() => takePhoto()}>사진 찍기</Button>
+                </Modal>
+            </KeyboardAvoidingView>
+        </Provider >
     );
 }
 
 const styles = StyleSheet.create({
     chatContainer: {
         flex: 1,
-        flexDirection: 'column-reverse'
-        // height: "100%",
-        // alignContent: 'center',
+        height: windowHeight,
+        marginHorizontal: 10,
+
     },
     modal: {
         backgroundColor: '#fff'
     },
     chatLogContainer: {
-        width: "100%",
-        height: '87%',
+
     },
     inputBox: {
-        width: "100%",
-        height: 50,
-        paddingTop: 5
+        paddingTop: 5,
+
     },
     bubbleSystem: {
         alignSelf: 'center',
